@@ -12,6 +12,7 @@ from datetime import datetime
 import num2words  # Ensure this package is installed: pip install num2words
 from PIL import Image, ImageTk
 from reportlab.lib.utils import simpleSplit
+from decimal import Decimal
 
 
 class InvoiceView(tk.Toplevel):
@@ -123,6 +124,32 @@ class InvoiceView(tk.Toplevel):
         except Exception as e:
             print(f"Error loading image: {e}")
             return None
+
+    def total_in_words(self, total):
+        # Convert to Decimal to handle fractions accurately
+        total = Decimal(total)
+
+        # Separate the integer part (rupees) and the fractional part (paisa)
+        rupees = int(total)
+        # Get the fractional part as an integer
+        paisa = int((total - rupees) * 100)
+
+       # Convert rupees and paisa to words
+        rupees_in_words = num2words.num2words(rupees, lang='en_IN').title()
+        if paisa > 0:
+            paisa_in_words = f"{num2words.num2words(paisa, lang='en_IN').title()} Paisa"
+        else:
+            paisa_in_words = ""
+
+        # Combine into a single grammatically correct string
+        if paisa > 0:
+            total_in_words = f"{rupees_in_words} Rupees and {paisa_in_words}"
+        else:
+            total_in_words = f"{rupees_in_words} Rupees"
+
+        # Combine the rupees and paisa
+        total_in_words = f"{rupees_in_words}{paisa_in_words}"
+        return total_in_words
 
     def create_invoice_form(self):
         """Create fields for generating a new invoice."""
@@ -366,7 +393,7 @@ class InvoiceView(tk.Toplevel):
         price_after_discount = subtotal-discount_amount
         vat = price_after_discount * (vat_rate / 100)
         total = price_after_discount + vat
-        total_in_words = num2words.num2words(total, lang='en_IN').title()
+        total_in_words = self.total_in_words(total)
 
         # Summary Labels
         tk.Label(summary_frame, text=f"Subtotal: Rs.{subtotal:.2f}", font=(
@@ -535,7 +562,7 @@ class InvoiceView(tk.Toplevel):
         price_after_discount = subtotal-discount_amount
         vat = price_after_discount * (vat_rate / 100)
         total = price_after_discount + vat
-        total_in_words = num2words.num2words(total, lang='en_IN').title()
+        total_in_words = self.total_in_words(total)
 
         # Label and Value for Subtotal
         tk.Label(summary_frame, text="Subtotal:", font=("Arial", 10),
@@ -694,7 +721,7 @@ class InvoiceView(tk.Toplevel):
             vat = price_after_discount * \
                 (float(self.vat_rate_entry.get()) / 100)
             total = price_after_discount + vat
-            total_in_words = num2words.num2words(total, lang='en_IN').title()
+            total_in_words = self.total_in_words(total)
             paid_amount = float(self.paid_amount_entry.get())
             due_amount = total - paid_amount
 
