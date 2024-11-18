@@ -50,21 +50,40 @@ class InvoiceView(tk.Toplevel):
         self.current_fiscal_year = self.get_fiscal_year_nepali()
         self.last_invoice = self.get_last_invoice()
         self.invoice_number = self.generate_invoice_number()
+         
 
-    def get_fiscal_year_nepali():
-        """Manually determine the fiscal year based on approximate Nepali calendar logic."""
+   # Function to check if a year is a leap year
+    def is_leap_year(self, year):
+        # A year is a leap year if it is divisible by 4, but not divisible by 100,
+        # unless it is divisible by 400.
+        return (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0))
+
+    # Function to calculate the Nepali fiscal year considering leap years
+    def get_fiscal_year_nepali(self):
         today = datetime.now()
         year = today.year
         month = today.month
         day = today.day
 
-        # Approximate Shrawan 1 (mid-July) to determine fiscal year
-        if month < 7 or (month == 7 and day < 16):  # Before Shrawan 1
-            nepali_year = year - 56  # Adjust to Nepali year
-            return f"{nepali_year - 1}/{nepali_year}"
+        # Check if the current year is a leap year
+        leap_year = self.is_leap_year(year)
+
+        # Adjust logic for Shrawan 1 based on whether it's a leap year
+        if leap_year:
+            shrawan_start_day = 16  # In a leap year, Shrawan 1 starts on July 16
         else:
-            nepali_year = year - 56
-            return f"{nepali_year}/{nepali_year + 1}"
+            shrawan_start_day = 17  # In a normal year, Shrawan 1 starts on July 17
+
+        # Approximate Shrawan 1 (mid-July) to determine fiscal year
+        if month < 7 or (month == 7 and day < shrawan_start_day):  # Before Shrawan 1
+            nepali_year = year + 57  # Adjust to Nepali year
+            fiscal_year = f"{nepali_year}/{nepali_year + 1 }"
+        else:
+            nepali_year = year + 57
+            fiscal_year = f"{nepali_year}/{nepali_year + 1}"
+
+        
+        return fiscal_year
 
     def get_last_invoice(self):
         """Retrieve the last invoice number from a file."""
@@ -93,7 +112,7 @@ class InvoiceView(tk.Toplevel):
         # Increment the last invoice number or start from 1
         self.last_invoice += 1
         self.save_last_invoice(self.last_invoice)
-        return f"#-{self.current_fiscal_year}-{self.last_invoice:03}"
+        return f"#{self.last_invoice:03}"
     
     def load_logo(self, path):
         try:
@@ -577,156 +596,161 @@ class InvoiceView(tk.Toplevel):
         c = canvas.Canvas(pdf_file_path, pagesize=A4)
         width, height = A4
 
-        # Company Logo
-        logo_path = "moonal_blackwhite.png"
-        logo_width = 145
-        logo_height = 20
-        logo_x = 20  # Small margin from the left edge
-        logo_y = height - logo_height - 35  # Small margin from the top edge
+        def draw_invoice_content(c, start_y):
+            # Company Logo
+            logo_path = "moonal_blackwhite.png"
+            logo_width = 145
+            logo_height = 20
+            logo_x = 20  # Small margin from the left edge
+            logo_y = height - logo_height - 35  # Small margin from the top edge
 
-        try:
-            c.drawImage(logo_path, logo_x, logo_y, width=logo_width,
-                        height=logo_height, mask='auto')
-        except Exception as e:
-            print("Error loading logo image:", e)
-            c.drawString(logo_x, logo_y + 20, "Logo not found")
+            try:
+                c.drawImage(logo_path, logo_x, logo_y, width=logo_width,
+                            height=logo_height, mask='auto')
+            except Exception as e:
+                print("Error loading logo image:", e)
+                c.drawString(logo_x, logo_y + 20, "Logo not found")
 
-        # Add the invoice title at the center
-        invoice_title = "Invoice"
-        c.setFont("Courier-Bold", 20)
-        title_x = width / 2
-        title_y = height - 25
-        c.drawCentredString(title_x, title_y, invoice_title)
+            # Add the invoice title at the center
+            invoice_title = "Invoice"
+            c.setFont("Courier-Bold", 20)
+            title_x = width / 2
+            title_y = height - 25
+            c.drawCentredString(title_x, title_y, invoice_title)
 
-        # Company Info
-        c.setFont("Courier-Bold", 12)
-        c.drawCentredString(title_x, height - 50, "MOONAL UDHYOG PVT. LTD.")
-        c.setFont("Courier", 10)
-        c.drawCentredString(title_x, height - 65,
-                            "Golbazar-4, Siraha, Madhesh Pradesh, Nepal")
-        c.setFont("Helvetica", 12)
-        c.drawString(450, height - 50, "VAT Reg. No: 609764022")
+            # Company Info
+            c.setFont("Courier-Bold", 12)
+            c.drawCentredString(title_x, height - 50, "MOONAL UDHYOG PVT. LTD.")
+            c.setFont("Courier", 10)
+            c.drawCentredString(title_x, height - 65,
+                                "Golbazar-4, Siraha, Madhesh Pradesh, Nepal")
+            c.setFont("Helvetica", 12)
+            c.drawString(450, height - 50, "VAT Reg. No: 609764022")
 
-        c.setFont("Courier", 10)
-        c.drawString(450, height - 65,
-                     f"Date: {datetime.now().strftime('%Y-%m-%d')}")
-        c.drawString(40, height - 100, f"Invoice No: {self.invoice_number}")
+            c.setFont("Courier", 10)
+            c.drawString(450, height - 65,
+                        f"Date: {datetime.now().strftime('%Y-%m-%d')}")
+            c.drawString(40, height - 100, f"Invoice No: {self.invoice_number}")
 
-        # Customer Info
-        customer_info_y = height - 115
-        c.drawString(40, customer_info_y, "Customer Name:")
-        c.drawString(150, customer_info_y, self.client_name_entry.get())
-        customer_info_y -= 15
-        c.drawString(40, customer_info_y, "Address:")
-        c.drawString(150, customer_info_y, self.address_entry.get())
-        customer_info_y -= 15
-        c.drawString(40, customer_info_y, "Contact:")
-        c.drawString(150, customer_info_y, self.client_contact_entry.get())
-        customer_info_y -= 15
-        c.drawString(40, customer_info_y, "PAN No:")
-        c.drawString(150, customer_info_y, self.pan_no_entry.get())
+            # Customer Info
+            customer_info_y = height - 115
+            c.drawString(40, customer_info_y, "Customer Name:")
+            c.drawString(150, customer_info_y, self.client_name_entry.get())
+            customer_info_y -= 15
+            c.drawString(40, customer_info_y, "Address:")
+            c.drawString(150, customer_info_y, self.address_entry.get())
+            customer_info_y -= 15
+            c.drawString(40, customer_info_y, "Contact:")
+            c.drawString(150, customer_info_y, self.client_contact_entry.get())
+            customer_info_y -= 15
+            c.drawString(40, customer_info_y, "PAN No:")
+            c.drawString(150, customer_info_y, self.pan_no_entry.get())
 
-        # Draw a dotted line after the customer information
-        c.setDash(1, 2)
-        line_y_position_after_customer_info = customer_info_y - 10
-        c.line(40, line_y_position_after_customer_info,
-               width - 40, line_y_position_after_customer_info)
-        c.setDash(1, 0)
+            # Draw a dotted line after the customer information
+            c.setDash(1, 2)
+            line_y_position_after_customer_info = customer_info_y - 10
+            c.line(40, line_y_position_after_customer_info,
+                width - 40, line_y_position_after_customer_info)
+            c.setDash(1, 0)
 
-        # Item table headers
-        headers = ["S.N", "HS Code", "Description",
-                   "Quantity", "Rate", "Amount"]
-        x_positions = [40, 90, 160, 300, 370, 440]
-        y_position = height - 200
-        c.setFont("Courier-Bold", 10)
-        for i, header in enumerate(headers):
-            c.drawString(x_positions[i], y_position, header)
+            # Item table headers
+            headers = ["S.N", "HS Code", "Description",
+                    "Quantity", "Rate", "Amount"]
+            x_positions = [40, 90, 160, 300, 370, 440]
+            y_position = height - 200
+            c.setFont("Courier-Bold", 10)
+            for i, header in enumerate(headers):
+                c.drawString(x_positions[i], y_position, header)
 
-        # Populate the table with items
-        c.setFont("Courier", 10)
-        for index, item in enumerate(self.invoice_items, start=1):
+            # Populate the table with items
+            c.setFont("Courier", 10)
+            for index, item in enumerate(self.invoice_items, start=1):
+                y_position -= 15
+                c.drawString(x_positions[0], y_position, str(index))
+                c.drawString(x_positions[1], y_position, item["hs_code"])
+                c.drawString(x_positions[2], y_position, item["product_name"])
+                c.drawString(x_positions[3], y_position, str(item["quantity"]))
+                c.drawString(x_positions[4], y_position, f"Rs.{
+                            item['price_per_unit']:.2f}")
+                c.drawString(x_positions[5], y_position,
+                            f"Rs.{item['total_price']:.2f}")
+
+            # Draw a dotted line before the summary section
+            y_position -= 10
+            c.setDash(1, 2)
+            c.line(40, y_position, width - 40, y_position)
+            c.setDash(1, 0)
+
+            # Summary Section
+            y_position -= 10
+            subtotal = sum(item["total_price"] for item in self.invoice_items)
+            discount_amount = subtotal * (float(self.discount_entry.get()) / 100)
+            price_after_discount = subtotal - discount_amount
+            vat = price_after_discount * (float(self.vat_rate_entry.get()) / 100)
+            total = price_after_discount + vat
+            total_in_words = num2words.num2words(total, lang='en_IN').title()
+            paid_amount = float(self.paid_amount_entry.get())
+            due_amount = total - paid_amount
+
+            c.drawString(390, y_position, "Subtotal:")
+            c.drawRightString(540, y_position, f"Rs.{subtotal:.2f}")
             y_position -= 15
-            c.drawString(x_positions[0], y_position, str(index))
-            c.drawString(x_positions[1], y_position, item["hs_code"])
-            c.drawString(x_positions[2], y_position, item["product_name"])
-            c.drawString(x_positions[3], y_position, str(item["quantity"]))
-            c.drawString(x_positions[4], y_position, f"Rs.{
-                         item['price_per_unit']:.2f}")
-            c.drawString(x_positions[5], y_position,
-                         f"Rs.{item['total_price']:.2f}")
+            c.drawString(390, y_position, f"Discount ({
+                        self.discount_entry.get()}%):")
+            c.drawRightString(540, y_position, f"Rs.{discount_amount:.2f}")
+            y_position -= 15
+            c.drawString(390, y_position, f"VAT ({self.vat_rate_entry.get()}%):")
+            c.drawRightString(540, y_position, f"Rs.{vat:.2f}")
+            y_position -= 15
+            c.setFont("Courier-Bold", 10)
+            c.drawString(390, y_position, "Total:")
+            c.drawRightString(540, y_position, f"Rs.{total:.2f}")
+            y_position -= 15
+            c.setFont("Courier", 10)
+            c.drawString(390, y_position, "Paid amount:")
+            c.drawRightString(540, y_position, f"Rs.{paid_amount:.2f}")
+            y_position -= 15
+            c.drawString(390, y_position, "Due amount:")
+            c.drawRightString(540, y_position, f"Rs.{due_amount:.2f}")
 
-        # Draw a dotted line before the summary section
-        y_position -= 10
-        c.setDash(1, 2)
-        c.line(40, y_position, width - 40, y_position)
-        c.setDash(1, 0)
+            # Define the maximum width for the text
+            from reportlab.lib.utils import simpleSplit
 
-        # Summary Section
-        y_position -= 10
-        subtotal = sum(item["total_price"] for item in self.invoice_items)
-        discount_amount = subtotal * (float(self.discount_entry.get()) / 100)
-        price_after_discount = subtotal - discount_amount
-        vat = price_after_discount * (float(self.vat_rate_entry.get()) / 100)
-        total = price_after_discount + vat
-        total_in_words = num2words.num2words(total, lang='en_IN').title()
-        paid_amount = float(self.paid_amount_entry.get())
-        due_amount = total - paid_amount
+            max_width = 330
 
-        c.drawString(390, y_position, "Subtotal:")
-        c.drawRightString(540, y_position, f"Rs.{subtotal:.2f}")
-        y_position -= 15
-        c.drawString(390, y_position, f"Discount ({
-                     self.discount_entry.get()}%):")
-        c.drawRightString(540, y_position, f"Rs.{discount_amount:.2f}")
-        y_position -= 15
-        c.drawString(390, y_position, f"VAT ({self.vat_rate_entry.get()}%):")
-        c.drawRightString(540, y_position, f"Rs.{vat:.2f}")
-        y_position -= 15
-        c.setFont("Courier-Bold", 10)
-        c.drawString(390, y_position, "Total:")
-        c.drawRightString(540, y_position, f"Rs.{total:.2f}")
-        y_position -= 15
-        c.setFont("Courier", 10)
-        c.drawString(390, y_position, "Paid amount:")
-        c.drawRightString(540, y_position, f"Rs.{paid_amount:.2f}")
-        y_position -= 15
-        c.drawString(390, y_position, "Due amount:")
-        c.drawRightString(540, y_position, f"Rs.{due_amount:.2f}")
+            # Calculate the text width
+            text_width = c.stringWidth(f"Total in Words: {total_in_words}", "Courier-Oblique", 10)
 
-        # Define the maximum width for the text
-        from reportlab.lib.utils import simpleSplit
+            y_position += 30
+            # Wrap the text if it exceeds the max width
+            if text_width > max_width:
+                # Split the text into multiple lines using simpleSplit
+                wrapped_lines = simpleSplit(f"Total in Words: {total_in_words}", "Courier-Oblique", 10, max_width)
+                for line in wrapped_lines:
+                    c.drawString(40, y_position, line)
+                    y_position -= 15  # Adjust the line spacing
+            else:
+                # If the text fits, draw it in a single line
+                c.drawString(40, y_position, f"Total in Words: {total_in_words}")
+            # Signature Section
+            y_position -= 20
+            c.setFont("Courier", 10)
+            c.drawString(40, y_position, "Accountant:")
+            c.setDash(1, 2)
+            c.line(120, y_position, 200, y_position)
+            c.setDash(1, 0)
 
-        max_width = 330
+           # Draw the first copy
+        draw_invoice_content(c, height - 50)
 
-        # Calculate the text width
-        text_width = c.stringWidth(f"Total in Words: {total_in_words}", "Courier-Oblique", 10)
-
-        y_position += 30
-        # Wrap the text if it exceeds the max width
-        if text_width > max_width:
-            # Split the text into multiple lines using simpleSplit
-            wrapped_lines = simpleSplit(f"Total in Words: {total_in_words}", "Courier-Oblique", 10, max_width)
-            for line in wrapped_lines:
-                c.drawString(40, y_position, line)
-                y_position -= 15  # Adjust the line spacing
-        else:
-            # If the text fits, draw it in a single line
-            c.drawString(40, y_position, f"Total in Words: {total_in_words}")
-        # Signature Section
-        y_position -= 20
-        c.setFont("Courier", 10)
-        c.drawString(40, y_position, "Accountant:")
-        c.setDash(1, 2)
-        c.line(120, y_position, 200, y_position)
-        c.setDash(1, 0)
+        # Draw the second copy below the first
+        draw_invoice_content(c, height / 2 - 50)
 
         # Save the PDF
         c.save()
 
         # Show confirmation
-        messagebox.showinfo(
-            "Print Invoice", "Invoice has been saved as a PDF and is ready for preview.", parent=self)
-
+        messagebox.showinfo("Print Invoice", "Invoice with two copies has been generated.", parent=self)
         # Platform-specific preview and print
         current_platform = platform.system()
         try:
