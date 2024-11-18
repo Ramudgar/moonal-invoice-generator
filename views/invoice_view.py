@@ -15,6 +15,7 @@ from reportlab.lib.utils import simpleSplit
 from decimal import Decimal
 
 
+
 class InvoiceView(tk.Toplevel):
     def __init__(self, master=None, invoice_id=None):
         super().__init__(master)
@@ -51,6 +52,8 @@ class InvoiceView(tk.Toplevel):
         self.current_fiscal_year = self.get_fiscal_year_nepali()
         self.last_invoice = self.get_last_invoice()
         self.invoice_number = self.generate_invoice_number()
+
+ 
 
    # Function to check if a year is a leap year
 
@@ -126,15 +129,19 @@ class InvoiceView(tk.Toplevel):
             return None
 
     def total_in_words(self, total):
-        # Convert to Decimal to handle fractions accurately
-        total = Decimal(total)
+        """
+        Convert a numeric total amount into a grammatically correct string representation in words.
+        """
+        from decimal import Decimal, ROUND_DOWN
+
+        # Ensure total is a Decimal for precise calculations
+        total = Decimal(total).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
 
         # Separate the integer part (rupees) and the fractional part (paisa)
         rupees = int(total)
-        # Get the fractional part as an integer
         paisa = int((total - rupees) * 100)
 
-       # Convert rupees and paisa to words
+        # Convert rupees and paisa to words
         rupees_in_words = num2words.num2words(rupees, lang='en_IN').title()
         if paisa > 0:
             paisa_in_words = f"{num2words.num2words(paisa, lang='en_IN').title()} Paisa"
@@ -143,13 +150,12 @@ class InvoiceView(tk.Toplevel):
 
         # Combine into a single grammatically correct string
         if paisa > 0:
-            total_in_words = f"{rupees_in_words} Rupees and {paisa_in_words}"
+            total_in_words = f"{rupees_in_words} Rupees And {paisa_in_words}"
         else:
             total_in_words = f"{rupees_in_words} Rupees"
 
-        # Combine the rupees and paisa
-        total_in_words = f"{rupees_in_words}{paisa_in_words}"
         return total_in_words
+
 
     def create_invoice_form(self):
         """Create fields for generating a new invoice."""
@@ -413,11 +419,15 @@ class InvoiceView(tk.Toplevel):
 
     def prompt_paid_amount(self, total_amount):
         """Prompt the user to enter the paid amount after previewing the invoice."""
+        # Label for Paid Amount Entry
+        tk.Label(self.left_frame, text="Enter Paid Amount", bg="#f0f0f5", font=(
+            "Arial", 10, "bold")).grid(row=13, column=0, padx=10, pady=10, sticky="w")
         # Add entry field for paid amount and finalize the invoice
         self.paid_amount_entry = tk.Entry(self.left_frame, width=25)
         self.paid_amount_entry.grid(row=13, column=1, padx=10, pady=10)
-        tk.Label(self.left_frame, text="Enter Paid Amount", bg="#f0f0f5", font=(
-            "Arial", 10, "bold")).grid(row=13, column=0, padx=10, pady=10, sticky="w")
+
+        # Automatically focus on the paid amount entry field
+        self.paid_amount_entry.focus_set()
 
         # Button to finalize and save the invoice
         tk.Button(self.left_frame, text="Finalize Invoice", command=lambda: self.finalize_invoice(
@@ -613,6 +623,7 @@ class InvoiceView(tk.Toplevel):
                   bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
 
     def print_invoice(self):
+        
         """Generate a PDF of the invoice, show a preview, and allow printing based on the OS."""
 
         # Set up the PDF file path
@@ -641,7 +652,7 @@ class InvoiceView(tk.Toplevel):
             title_x = width / 2
 
             # Company Info
-            c.setFont("Courier-Bold", 10)
+            c.setFont("Courier-Bold", 11)
             c.drawString(40, start_y-40, "Vat Reg. No: 609764022")
             c.setFont("Courier-Bold", 12)
             c.drawCentredString(title_x, start_y, "MOONAL UDHYOG PVT. LTD.")
@@ -689,7 +700,7 @@ class InvoiceView(tk.Toplevel):
                        "Quantity", "Rate", "Amount"]
             x_positions = [40, 90, 160, 300, 370, 440]
             y_position = line_y_position_after_customer_info - 15
-            c.setFont("Courier-Bold", 10)
+            c.setFont("Courier-Bold", 11)
             for i, header in enumerate(headers):
                 c.drawString(x_positions[i], y_position, header)
 
@@ -736,7 +747,7 @@ class InvoiceView(tk.Toplevel):
                          f"VAT ({self.vat_rate_entry.get()}%):")
             c.drawRightString(540, y_position, f"Rs.{vat:.2f}")
             y_position -= 15
-            c.setFont("Courier-Bold", 10)
+            c.setFont("Courier-Bold", 11)
             c.drawString(390, y_position, "Total:")
             c.drawRightString(540, y_position, f"Rs.{total:.2f}")
             y_position -= 15
