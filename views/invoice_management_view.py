@@ -10,65 +10,63 @@ class InvoiceManagementView(tk.Toplevel):
         self.geometry("900x500")
 
         # Invoice List Label
-        tk.Label(self, text="List of Invoices", font=("Arial", 14)).pack(pady=10)
+        tk.Label(self, text="List of Invoices", font=("Arial", 14, "bold")).pack(pady=10)
 
-        # Invoice List Table
-        self.invoice_table = ttk.Treeview(self, columns=("ID", "Client", "Date", "Subtotal", "VAT", "Discount", "Total", "Paid", "Due"), show="headings")
+        # Invoice Table with additional columns for ID and Invoice Number
+        self.invoice_table = ttk.Treeview(self, columns=("ID", "Invoice Number", "Client", "Date", "Total"), show="headings")
         self.invoice_table.heading("ID", text="Invoice ID")
+        self.invoice_table.heading("Invoice Number", text="Invoice Number")
         self.invoice_table.heading("Client", text="Client Name")
         self.invoice_table.heading("Date", text="Date")
-        self.invoice_table.heading("Subtotal", text="Subtotal")
-        self.invoice_table.heading("VAT", text="VAT Amount")
-        self.invoice_table.heading("Discount", text="Discount Amount")
         self.invoice_table.heading("Total", text="Total Amount")
-        self.invoice_table.heading("Paid", text="Paid Amount")
-        self.invoice_table.heading("Due", text="Due Amount")
         self.invoice_table.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Action Buttons
+        # Buttons
         action_frame = tk.Frame(self)
         action_frame.pack(pady=10)
 
         view_button = tk.Button(action_frame, text="View Invoice", command=self.view_invoice)
         view_button.grid(row=0, column=0, padx=10)
 
-        delete_button = tk.Button(action_frame, text="Delete Invoice", command=self.delete_invoice)
-        delete_button.grid(row=0, column=1, padx=10)
-
-        # Load invoices on initialization
+        # Load invoices
         self.load_invoices()
 
     def load_invoices(self):
-        """Load all invoices into the invoice table."""
+        """Load invoices into the table."""
         for item in self.invoice_table.get_children():
             self.invoice_table.delete(item)
-        
-        invoices = InvoiceController.get_all_invoices()  # Make sure this method retrieves all relevant fields
+
+        invoices = InvoiceController.get_all_invoices()
         for invoice in invoices:
-            self.invoice_table.insert("", "end", values=(invoice["invoice_id"], invoice["client_name"], invoice["date"],
-                                                         invoice["subtotal"], invoice["vat_amount"], invoice["discount"],
-                                                         invoice["total_amount"], invoice["paid_amount"], invoice["due_amount"]))
+            self.invoice_table.insert("", "end", values=(invoice["invoice_id"], invoice["invoice_number"], invoice["client_name"],
+                                                         invoice["date"], f"Rs.{invoice['total_amount']:.2f}"))
 
     def view_invoice(self):
-        """View the selected invoice details."""
+        """Open the Invoice View with the selected invoice ID."""
         selected_item = self.invoice_table.selection()
         if selected_item:
             invoice_id = self.invoice_table.item(selected_item, "values")[0]
-            # Open InvoiceView with the selected invoice_id
-            InvoiceView(self, invoice_id=invoice_id)
+
+            # Fetch invoice details and items
+            invoice_data, items = InvoiceController.get_invoice_details(invoice_id)
+
+            # Create a simplified InvoiceView
+            invoice_view = InvoiceView(self)
+            invoice_view.invoice_items = items
+            invoice_view.show_invoice_bill_only(
+                invoice_id=invoice_id,
+                invoice_number=invoice_data["invoice_number"],
+                client_name=invoice_data["client_name"],
+                client_contact=invoice_data["client_contact"],
+                address=invoice_data["address"],
+                pan_no=invoice_data["pan_no"],
+                vat_rate=invoice_data["vat_rate"],
+                discount=invoice_data["discount"],
+                subtotal=invoice_data["subtotal"],
+                paid_amount=invoice_data["paid_amount"],
+                due_amount=invoice_data["due_amount"]
+            )
+            invoice_view.grab_set()  # Ensure modal-like behavior
         else:
-            messagebox.showwarning("No selection", "Please select an invoice to view.", parent=self)
+            messagebox.showwarning("No Selection", "Please select an invoice to view.", parent=self)
 
-    def delete_invoice(self):
-        """Delete the selected invoice."""
-        selected_item = self.invoice_table.selection()
-        if not selected_item:
-            messagebox.showwarning("No selection", "Please select an invoice to delete.", parent=self)
-            return
-
-        invoice_id = self.invoice_table.item(selected_item, "values")[0]
-        confirm = messagebox.askyesno("Delete Invoice", f"Are you sure you want to delete Invoice ID: {invoice_id}?", parent=self)
-        if confirm:
-            InvoiceController.delete_invoice(invoice_id)  # Make sure this method properly deletes associated items if needed
-            self.load_invoices()
-            messagebox.showinfo("Success", "Invoice deleted successfully.", parent=self)

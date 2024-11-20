@@ -13,7 +13,7 @@ import num2words  # Ensure this package is installed: pip install num2words
 from PIL import Image, ImageTk
 from reportlab.lib.utils import simpleSplit
 from decimal import Decimal
-
+from utils.invoice_utils import InvoiceUtils
 
 
 class InvoiceView(tk.Toplevel):
@@ -24,9 +24,6 @@ class InvoiceView(tk.Toplevel):
         self.configure(bg="#f0f0f5")
         self.invoice_id = invoice_id
         self.invoice_items = []  # Holds the items added to the invoice
-
-        # Generate a consistent invoice number
-        # self.invoice_number = f"INV-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
         # Left frame for invoice form, right frame for invoice preview
         self.left_frame = tk.Frame(self, bg="#f0f0f5")
@@ -42,80 +39,15 @@ class InvoiceView(tk.Toplevel):
         logo_path = os.path.abspath("moonal_blackwhite.png")
         self.logo_image = self.load_logo(logo_path)
 
+        self.invoice_file = "last_invoice.txt"
+        self.current_fiscal_year = InvoiceUtils.get_fiscal_year_nepali()
+        self.invoice_number = None
+
         # If an existing invoice_id is provided, load details
         if self.invoice_id:
             self.load_invoice_details()
         else:
             self.create_invoice_form()
-
-        self.invoice_file = "last_invoice.txt"
-        self.current_fiscal_year = self.get_fiscal_year_nepali()
-        self.last_invoice = self.get_last_invoice()
-        self.invoice_number = self.generate_invoice_number()
-
- 
-
-   # Function to check if a year is a leap year
-
-    def is_leap_year(self, year):
-        # A year is a leap year if it is divisible by 4, but not divisible by 100,
-        # unless it is divisible by 400.
-        return (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0))
-
-    # Function to calculate the Nepali fiscal year considering leap years
-    def get_fiscal_year_nepali(self):
-        today = datetime.now()
-        year = today.year
-        month = today.month
-        day = today.day
-
-        # Check if the current year is a leap year
-        leap_year = self.is_leap_year(year)
-
-        # Adjust logic for Shrawan 1 based on whether it's a leap year
-        if leap_year:
-            shrawan_start_day = 16  # In a leap year, Shrawan 1 starts on July 16
-        else:
-            shrawan_start_day = 17  # In a normal year, Shrawan 1 starts on July 17
-
-        # Approximate Shrawan 1 (mid-July) to determine fiscal year
-        if month < 7 or (month == 7 and day < shrawan_start_day):  # Before Shrawan 1
-            nepali_year = year + 57  # Adjust to Nepali year
-            fiscal_year = f"{nepali_year}/{nepali_year + 1}"
-        else:
-            nepali_year = year + 57
-            fiscal_year = f"{nepali_year}/{nepali_year + 1}"
-
-        return fiscal_year
-
-    def get_last_invoice(self):
-        """Retrieve the last invoice number from a file."""
-        if not os.path.exists(self.invoice_file):
-            return 0  # Start fresh if the file doesn't exist
-
-        with open(self.invoice_file, "r") as file:
-            data = file.read().strip()
-            try:
-                file_fiscal_year, invoice_number = data.split('-')
-                # If the fiscal year matches, continue with the previous sequence
-                if file_fiscal_year == self.current_fiscal_year:
-                    return int(invoice_number)
-            except ValueError:
-                pass
-
-        return 0  # Reset the sequence if the fiscal year has changed
-
-    def save_last_invoice(self, number):
-        """Save the last invoice number to a file."""
-        with open(self.invoice_file, "w") as file:
-            file.write(f"{self.current_fiscal_year}-{number:03}")
-
-    def generate_invoice_number(self):
-        """Generate a new invoice number."""
-        # Increment the last invoice number or start from 1
-        self.last_invoice += 1
-        self.save_last_invoice(self.last_invoice)
-        return f"# {self.last_invoice:03}"
 
     def load_logo(self, path):
         try:
@@ -144,7 +76,8 @@ class InvoiceView(tk.Toplevel):
         # Convert rupees and paisa to words
         rupees_in_words = num2words.num2words(rupees, lang='en_IN').title()
         if paisa > 0:
-            paisa_in_words = f"{num2words.num2words(paisa, lang='en_IN').title()} Paisa"
+            paisa_in_words = f"{num2words.num2words(
+                paisa, lang='en_IN').title()} Paisa"
         else:
             paisa_in_words = ""
 
@@ -155,7 +88,6 @@ class InvoiceView(tk.Toplevel):
             total_in_words = f"{rupees_in_words} Rupees"
 
         return total_in_words
-
 
     def create_invoice_form(self):
         """Create fields for generating a new invoice."""
@@ -337,11 +269,11 @@ class InvoiceView(tk.Toplevel):
         info_frame = tk.Frame(self.right_frame, bg="white")
         info_frame.pack(fill="x", padx=20, pady=5)
 
-        # Invoice Number
-        tk.Label(info_frame, text="Invoice Number:", font=(
-            "Arial", 10, "bold"), bg="white").grid(row=0, column=0, sticky="w")
-        tk.Label(info_frame, text=self.invoice_number, font=("Arial", 10),
-                 bg="white").grid(row=0, column=1, sticky="w", padx=(10, 0))
+        # # Invoice Number
+        # tk.Label(info_frame, text="Invoice Number:", font=(
+        #     "Arial", 10, "bold"), bg="white").grid(row=0, column=0, sticky="w")
+        # tk.Label(info_frame, text=self.invoice_number, font=("Arial", 10),
+        #          bg="white").grid(row=0, column=1, sticky="w", padx=(10, 0))
 
         # Customer Information in a structured two-column format
         tk.Label(info_frame, text="Customer Name:", font=(
@@ -435,6 +367,13 @@ class InvoiceView(tk.Toplevel):
 
     def finalize_invoice(self, total_amount):
         """Finalize the invoice by saving it to the database and printing."""
+
+        if not self.invoice_number:
+            # Generate the invoice number only once
+            self.invoice_number = InvoiceUtils.generate_invoice_number(
+                self.current_fiscal_year, self.invoice_file
+            )
+
         try:
             paid_amount = float(self.paid_amount_entry.get())
             due_amount = total_amount - paid_amount
@@ -447,7 +386,7 @@ class InvoiceView(tk.Toplevel):
             discount = float(self.discount_entry.get())
 
             invoice_id = InvoiceController.create_invoice(
-                client_name, client_contact, address, pan_no, self.invoice_items, vat_rate, discount, paid_amount
+                self.invoice_number, client_name, client_contact, address, pan_no, self.invoice_items, vat_rate, discount, paid_amount
             )
             messagebox.showinfo("Success", f"Invoice {
                                 invoice_id} created successfully with due amount Rs.{due_amount:.2f}.", parent=self)
@@ -455,6 +394,116 @@ class InvoiceView(tk.Toplevel):
                                          address, pan_no, vat_rate, discount, paid_amount, due_amount)
         except ValueError as e:
             messagebox.showerror("Error", str(e), parent=self)
+
+    def show_invoice_bill_only(self, invoice_id, invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, due_amount):
+        """Display the invoice bill only with a print button."""
+
+        # Clear all existing widgets in the right frame
+        for widget in self.right_frame.winfo_children():
+            widget.destroy()
+
+        # Invoice Title
+        tk.Label(self.right_frame, text="INVOICE", font=(
+            "Arial", 18, "bold"), bg="white").pack(anchor="n", pady=10)
+
+        # Header Frame for Logo, Company Info, Date, and VAT
+        header_frame = tk.Frame(self.right_frame, bg="white")
+        header_frame.pack(fill="x", padx=20, pady=(5, 5))
+
+        # Logo
+        if self.logo_image:
+            tk.Label(header_frame, image=self.logo_image,
+                     bg="white").pack(anchor="w", padx=(10, 20))
+
+        # Company Info
+        tk.Label(header_frame, text="MOONAL UDHYOG PVT. LTD.", font=(
+            "Arial", 14, "bold"), bg="white").pack(anchor="center")
+        tk.Label(header_frame, text="Golbazar-4, Siraha, Madhesh Pradesh, Nepal",
+                 font=("Arial", 10), bg="white").pack(anchor="center")
+
+        # Invoice Number and Customer Info
+        info_frame = tk.Frame(self.right_frame, bg="white")
+        info_frame.pack(fill="x", padx=20, pady=10)
+
+        tk.Label(info_frame, text="Invoice Number:", font=(
+            "Arial", 10, "bold"), bg="white").grid(row=0, column=0, sticky="w")
+        tk.Label(info_frame, text=invoice_number, font=("Arial", 10), bg="white").grid(
+            row=0, column=1, sticky="w", padx=(10, 0))
+
+        tk.Label(info_frame, text="Customer Name:", font=(
+            "Arial", 10, "bold"), bg="white").grid(row=1, column=0, sticky="w")
+        tk.Label(info_frame, text=client_name, font=("Arial", 10),
+                 bg="white").grid(row=1, column=1, sticky="w", padx=(10, 0))
+
+        tk.Label(info_frame, text="Contact:", font=("Arial", 10, "bold"),
+                 bg="white").grid(row=1, column=2, sticky="w", padx=(20, 0))
+        tk.Label(info_frame, text=client_contact, font=("Arial", 10),
+                 bg="white").grid(row=1, column=3, sticky="w")
+
+        tk.Label(info_frame, text="Address:", font=("Arial", 10, "bold"),
+                 bg="white").grid(row=2, column=0, sticky="w")
+        tk.Label(info_frame, text=address, font=("Arial", 10), bg="white").grid(
+            row=2, column=1, columnspan=3, sticky="w", padx=(10, 0))
+
+        tk.Label(info_frame, text="PAN No:", font=("Arial", 10, "bold"),
+                 bg="white").grid(row=3, column=0, sticky="w")
+        tk.Label(info_frame, text=pan_no, font=("Arial", 10), bg="white").grid(
+            row=3, column=1, sticky="w", padx=(10, 0))
+
+        # Item Table
+        item_frame = tk.Frame(self.right_frame, bg="white")
+        item_frame.pack(fill="x", padx=20, pady=20)
+
+        headers = ["S.N", "HS Code", "Description",
+                   "Quantity", "Rate", "Amount"]
+        for i, header in enumerate(headers):
+            tk.Label(item_frame, text=header, font=("Arial", 10, "bold"),
+                     bg="white", anchor="w").grid(row=0, column=i, padx=5, pady=(0, 5))
+
+        for index, item in enumerate(self.invoice_items, start=1):
+            tk.Label(item_frame, text=index, bg="white").grid(
+                row=index, column=0, padx=5, sticky="w")
+            tk.Label(item_frame, text=item["hs_code"], bg="white").grid(
+                row=index, column=1, padx=5, sticky="w")
+            tk.Label(item_frame, text=item["product_name"], bg="white").grid(
+                row=index, column=2, padx=5, sticky="w")
+            tk.Label(item_frame, text=item["quantity"], bg="white").grid(
+                row=index, column=3, padx=5, sticky="w")
+            tk.Label(item_frame, text=f"Rs.{item['price_per_unit']:.2f}", bg="white").grid(
+                row=index, column=4, padx=5, sticky="w")
+            tk.Label(item_frame, text=f"Rs.{item['total_price']:.2f}", bg="white").grid(
+                row=index, column=5, padx=5, sticky="w")
+
+        # Summary Section
+        summary_frame = tk.Frame(self.right_frame, bg="white")
+        summary_frame.pack(anchor="e", padx=20, pady=20)
+
+        subtotal = sum(item["total_price"] for item in self.invoice_items)
+        discount_amount = subtotal * (discount / 100)
+        price_after_discount = subtotal - discount_amount
+        vat = price_after_discount * (vat_rate / 100)
+        total = price_after_discount + vat
+
+        tk.Label(summary_frame, text=f"Subtotal: Rs.{subtotal:.2f}", font=(
+            "Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"Discount ({discount}%): Rs.{
+                 discount_amount:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"VAT ({vat_rate}%): Rs.{
+                 vat:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"Total: Rs.{total:.2f}", font=(
+            "Arial", 12, "bold"), bg="white").pack(anchor="e", pady=(5, 0))
+        tk.Label(summary_frame, text=f"Total in Words: {self.total_in_words(total)}", font=(
+            "Arial", 10, "italic"), bg="white").pack(anchor="e", padx=10, pady=5)
+        tk.Label(summary_frame, text=f"Paid Amount: Rs.{paid_amount:.2f}", font=(
+            "Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"Due Amount: Rs.{due_amount:.2f}", font=(
+            "Arial", 10), bg="white").pack(anchor="e", pady=(0, 10))
+
+        # Print Invoice Button
+        tk.Button(self.right_frame, text="Print Invoice",
+                  command=lambda: self.print_invoice(
+                      invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount),
+                  bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
 
     def show_final_invoice_view(self, invoice_id, client_name, client_contact, address, pan_no, vat_rate, discount, paid_amount, due_amount):
         """Display the finalized version of the invoice with all specified details."""
@@ -510,10 +559,11 @@ class InvoiceView(tk.Toplevel):
         info_frame.pack(fill="x", padx=20, pady=10)
 
         # Invoice Number
+        invoice_number = self.invoice_number
 
         tk.Label(info_frame, text="Invoice Number:", font=(
             "Arial", 10, "bold"), bg="white").grid(row=0, column=0, sticky="w")
-        tk.Label(info_frame, text=self.invoice_number, font=("Arial", 10),
+        tk.Label(info_frame, text=invoice_number, font=("Arial", 10),
                  bg="white").grid(row=0, column=1, sticky="w", padx=(10, 0))
 
         # Customer Information in a structured two-column format
@@ -622,8 +672,13 @@ class InvoiceView(tk.Toplevel):
         tk.Button(self.right_frame, text="Print Invoice", command=self.print_invoice,
                   bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
 
-    def print_invoice(self):
-        
+    def print_invoice(self, invoice_number=None, client_name=None, client_contact=None, address=None, pan_no=None, vat_rate=None, discount=None, subtotal=None, paid_amount=None):
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.pdfbase import pdfmetrics
+
+        # Register the JetBrainsMono-Bold font
+        pdfmetrics.registerFont(
+            TTFont("JetBrainsMono-Bold", "JetBrainsMono-Bold.ttf"))
         """Generate a PDF of the invoice, show a preview, and allow printing based on the OS."""
 
         # Set up the PDF file path
@@ -632,6 +687,18 @@ class InvoiceView(tk.Toplevel):
         # Create a canvas for PDF
         c = canvas.Canvas(pdf_file_path, pagesize=A4)
         width, height = A4
+
+        # data to be displayed in the invoice
+        invoice_number = invoice_number or self.invoice_number
+        client_name = client_name or self.client_name_entry.get()
+        client_contact = client_contact or self.client_contact_entry.get()
+        address = address or self.address_entry.get()
+        pan_no = pan_no or self.pan_no_entry.get()
+        vat_rate = vat_rate or float(self.vat_rate_entry.get())
+        discount = discount or float(self.discount_entry.get())
+        paid_amount = paid_amount or float(self.paid_amount_entry.get())
+        subtotal = subtotal or sum(item["total_price"]
+                                   for item in self.invoice_items)
 
         def draw_invoice_content(c, start_y):
             """Draw a single copy of the invoice starting from the given y-coordinate."""
@@ -652,9 +719,9 @@ class InvoiceView(tk.Toplevel):
             title_x = width / 2
 
             # Company Info
-            c.setFont("Courier-Bold", 11)
+            c.setFont("Helvetica-Bold", 11)
             c.drawString(40, start_y-40, "Vat Reg. No: 609764022")
-            c.setFont("Courier-Bold", 12)
+            c.setFont("JetBrainsMono-Bold", 14)
             c.drawCentredString(title_x, start_y, "MOONAL UDHYOG PVT. LTD.")
             c.setFont("Courier", 10)
             c.drawCentredString(title_x, start_y - 15,
@@ -667,26 +734,25 @@ class InvoiceView(tk.Toplevel):
             customer_info_y = start_y-70
             # Add the invoice title at the center
             invoice_title = "Tax Invoice"
-            c.setFont("Courier-Bold", 12)
+            c.setFont("JetBrainsMono-Bold", 12)
             title_y = start_y - 40
             c.drawCentredString(title_x, title_y, invoice_title)
 
             # Customer Info
             c.setFont("Courier", 10)
-            c.drawString(40, customer_info_y,
-                         f"Bill No:{self.invoice_number}")
 
-            c.drawString(200, customer_info_y, f"Contact: {
-                         self.client_contact_entry.get()}")
-            c.drawString(380, customer_info_y, f"PAN No: {
-                         self.pan_no_entry.get()}")
+            c.drawString(40, customer_info_y,
+                         f"Bill No:{invoice_number}")
+
+            c.drawString(200, customer_info_y, f"Contact: {client_contact}")
+            c.drawString(380, customer_info_y, f"PAN No: {pan_no}")
 
             customer_info_y = start_y - 85
             c.drawString(40, customer_info_y, "Customer Name:")
-            c.drawString(150, customer_info_y, self.client_name_entry.get())
+            c.drawString(150, customer_info_y, client_name)
             customer_info_y -= 15
             c.drawString(40, customer_info_y, "Address:")
-            c.drawString(150, customer_info_y, self.address_entry.get())
+            c.drawString(150, customer_info_y, address)
 
             # Draw a dotted line after the customer information
             c.setDash(1, 2)
@@ -700,7 +766,7 @@ class InvoiceView(tk.Toplevel):
                        "Quantity", "Rate", "Amount"]
             x_positions = [40, 90, 160, 300, 370, 440]
             y_position = line_y_position_after_customer_info - 15
-            c.setFont("Courier-Bold", 11)
+            c.setFont("JetBrainsMono-Bold", 10)
             for i, header in enumerate(headers):
                 c.drawString(x_positions[i], y_position, header)
 
@@ -725,37 +791,38 @@ class InvoiceView(tk.Toplevel):
 
             # Summary Section
             y_position -= 15
-            subtotal = sum(item["total_price"] for item in self.invoice_items)
+            # subtotal =  sum(item["total_price"] for item in self.invoice_items)
             discount_amount = subtotal * \
-                (float(self.discount_entry.get()) / 100)
+                ((discount) / 100)
             price_after_discount = subtotal - discount_amount
             vat = price_after_discount * \
-                (float(self.vat_rate_entry.get()) / 100)
+                (vat_rate / 100)
             total = price_after_discount + vat
             total_in_words = self.total_in_words(total)
-            paid_amount = float(self.paid_amount_entry.get())
+
             due_amount = total - paid_amount
 
-            c.drawString(390, y_position, "Subtotal:")
+            c.drawString(370, y_position, "Subtotal:")
             c.drawRightString(540, y_position, f"Rs.{subtotal:.2f}")
             y_position -= 15
-            c.drawString(390, y_position, f"Discount ({
-                         self.discount_entry.get()}%):")
+            c.drawString(370, y_position, f"Discount ({
+                         discount}%):")
             c.drawRightString(540, y_position, f"Rs.{discount_amount:.2f}")
             y_position -= 15
-            c.drawString(390, y_position,
-                         f"VAT ({self.vat_rate_entry.get()}%):")
+            c.drawString(370, y_position,
+                         f"VAT ({vat_rate}%):")
             c.drawRightString(540, y_position, f"Rs.{vat:.2f}")
             y_position -= 15
-            c.setFont("Courier-Bold", 11)
-            c.drawString(390, y_position, "Total:")
+            c.setFont("JetBrainsMono-Bold", 11)
+            c.drawString(370, y_position, "Total:")
+            c.setFont("Helvetica-Bold", 10)
             c.drawRightString(540, y_position, f"Rs.{total:.2f}")
             y_position -= 15
             c.setFont("Courier", 10)
-            c.drawString(390, y_position, "Paid amount:")
+            c.drawString(370, y_position, "Paid amount:")
             c.drawRightString(540, y_position, f"Rs.{paid_amount:.2f}")
             y_position -= 15
-            c.drawString(390, y_position, "Due amount:")
+            c.drawString(370, y_position, "Due amount:")
             c.drawRightString(540, y_position, f"Rs.{due_amount:.2f}")
 
             # Total in Words
