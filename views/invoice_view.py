@@ -207,11 +207,11 @@ class InvoiceView(tk.Toplevel):
         self.item_tree.column("Price", width=100, anchor="center")
 
         # Buttons for actions
-        button_frame = tk.Frame(main_frame, bg="#f0f0f5")
-        button_frame.grid(row=8, column=0, columnspan=4, pady=20, sticky="ew")
+        self.button_frame = tk.Frame(main_frame, bg="#f0f0f5")
+        self.button_frame.grid(row=8, column=0, columnspan=4, pady=20, sticky="ew")
 
         tk.Button(
-            button_frame,
+            self.button_frame,
             text="Remove Selected Product",
             command=self.remove_selected_product,
             bg="#F44336",
@@ -221,7 +221,7 @@ class InvoiceView(tk.Toplevel):
         ).grid(row=0, column=0, padx=10, pady=10)
 
         tk.Button(
-            button_frame,
+            self.button_frame,
             text="Generate Invoice Preview",
             command=self.generate_invoice_preview,
             bg="#2196F3",
@@ -265,42 +265,6 @@ class InvoiceView(tk.Toplevel):
             return
 
         self.item_tree.delete(selected_item)
-
-    # def add_product(self):
-    #     """Add a selected product to the invoice."""
-    #     product_name = self.product_dropdown.get()
-    #     quantity = int(self.quantity_entry.get())
-    #     selected_product = next((p for p in self.product_list if f"{
-    #                             p[1]} - {p[3]}" == product_name), None)
-
-    #     if selected_product:
-    #         product_id, name, price_per_unit, hs_code = selected_product
-    #         total_price = price_per_unit * quantity
-    #         self.invoice_items.append({
-    #             "product_id": product_id,
-    #             "quantity": quantity,
-    #             "price_per_unit": price_per_unit,
-    #             "total_price": total_price,
-    #             "product_name": name,
-    #             "hs_code": hs_code
-    #         })
-    #         self.item_list.insert(
-    #             tk.END, f"{name} - HS Code:{hs_code} - Qty: {quantity} - Price: Rs.{total_price}")
-
-    # def remove_product(self):
-    #     """Remove the selected product from the invoice."""
-    #     try:
-    #         # Get the selected item's index
-    #         selected_index = self.item_list.curselection()[0]
-    #         # Remove the selected item from `invoice_items`
-    #         del self.invoice_items[selected_index]
-    #         # Remove the selected item from the Listbox
-    #         self.item_list.delete(selected_index)
-    #     except IndexError:
-    #         tk.messagebox.showerror(
-    #             "Error", "No product selected for removal.")
-
-
 
     def load_invoice_details(self):
         """Load and display details of the selected invoice."""
@@ -476,19 +440,28 @@ class InvoiceView(tk.Toplevel):
 
     def prompt_paid_amount(self, total_amount):
         """Prompt the user to enter the paid amount after previewing the invoice."""
-        # Label for Paid Amount Entry
-        tk.Label(self.left_frame, text="Enter Paid Amount", bg="#f0f0f5", font=(
-            "Arial", 10, "bold")).grid(row=13, column=0, padx=10, pady=10, sticky="w")
-        # Add entry field for paid amount and finalize the invoice
-        self.paid_amount_entry = tk.Entry(self.left_frame, width=25)
-        self.paid_amount_entry.grid(row=13, column=1, padx=10, pady=10)
+        # Add label and entry for Paid Amount in the button_frame
+        tk.Label(
+            self.button_frame, 
+            text="Paid Amount:", 
+            bg="#f0f0f5", 
+            font=("Arial", 12)
+        ).grid(row=1, column=0, padx=10, pady=10, sticky="e")
 
-        # Automatically focus on the paid amount entry field
-        self.paid_amount_entry.focus_set()
+        self.paid_amount_entry = tk.Entry(self.button_frame, width=20, font=("Arial", 12))
+        self.paid_amount_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        # Button to finalize and save the invoice
-        tk.Button(self.left_frame, text="Finalize Invoice", command=lambda: self.finalize_invoice(
-            total_amount), bg="#4CAF50", fg="white", width=15).grid(row=14, column=1, padx=10, pady=10)
+        # Add Finalize Invoice button in the button_frame
+        tk.Button(
+            self.button_frame, 
+            text="Finalize Invoice", 
+            command=lambda: self.finalize_invoice(total_amount),
+            bg="#4CAF50", 
+            fg="white", 
+            font=("Arial", 12, "bold"),
+            width=20
+        ).grid(row=1, column=2, padx=10, pady=10)
+
 
     def finalize_invoice(self, total_amount):
         """Finalize the invoice by saving it to the database and printing."""

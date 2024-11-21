@@ -3,30 +3,85 @@ from tkinter import ttk, messagebox
 from controllers.invoice_controller import InvoiceController
 from views.invoice_view import InvoiceView
 
+
 class InvoiceManagementView(tk.Toplevel):
     def __init__(self, master=None):
         super().__init__(master)
         self.title("Manage Invoices")
-        self.geometry("900x500")
+        self.geometry("950x550")
+        self.configure(bg="#f0f0f5")  # Light background
 
-        # Invoice List Label
-        tk.Label(self, text="List of Invoices", font=("Arial", 14, "bold")).pack(pady=10)
+        # Heading
+        heading_label = tk.Label(
+            self,
+            text="Invoice Management",
+            font=("Arial", 16, "bold"),
+            bg="#003366",
+            fg="#ffffff",
+            padx=10,
+            pady=10,
+            relief="ridge"
+        )
+        heading_label.pack(fill="x", pady=(0, 20))
 
-        # Invoice Table with additional columns for ID and Invoice Number
-        self.invoice_table = ttk.Treeview(self, columns=("ID", "Invoice Number", "Client", "Date", "Total"), show="headings")
+        # Main frame for table and buttons
+        main_frame = tk.Frame(self, bg="#ffffff", relief="groove", bd=2)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Invoice Table Label
+        tk.Label(
+            main_frame,
+            text="List of Invoices",
+            font=("Arial", 14, "bold"),
+            bg="#ffffff",
+            fg="#003366"
+        ).pack(pady=(10, 10))
+
+        # Invoice Table
+        self.invoice_table = ttk.Treeview(
+            main_frame,
+            columns=("ID", "Invoice Number", "Client", "Date", "Total"),
+            show="headings",
+            height=15
+        )
         self.invoice_table.heading("ID", text="Invoice ID")
         self.invoice_table.heading("Invoice Number", text="Invoice Number")
         self.invoice_table.heading("Client", text="Client Name")
         self.invoice_table.heading("Date", text="Date")
         self.invoice_table.heading("Total", text="Total Amount")
+
+        self.invoice_table.column("ID", width=80, anchor="center")
+        self.invoice_table.column("Invoice Number", width=150, anchor="center")
+        self.invoice_table.column("Client", width=200, anchor="w")
+        self.invoice_table.column("Date", width=120, anchor="center")
+        self.invoice_table.column("Total", width=100, anchor="e")
+
         self.invoice_table.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Buttons
-        action_frame = tk.Frame(self)
-        action_frame.pack(pady=10)
+        # Style for Treeview
+        style = ttk.Style()
+        style.configure("Treeview.Heading", font=("Arial", 12, "bold"))
+        style.configure("Treeview", font=("Arial", 11))
 
-        view_button = tk.Button(action_frame, text="View Invoice", command=self.view_invoice)
-        view_button.grid(row=0, column=0, padx=10)
+        # Scrollbars for Treeview
+        scrollbar_y = ttk.Scrollbar(main_frame, orient="vertical", command=self.invoice_table.yview)
+        scrollbar_y.pack(side="right", fill="y")
+        self.invoice_table.configure(yscrollcommand=scrollbar_y.set)
+
+        # Action Buttons Frame
+        action_frame = tk.Frame(main_frame, bg="#f0f0f5")
+        action_frame.pack(fill="x", pady=10)
+
+        view_button = tk.Button(
+            action_frame,
+            text="View Invoice",
+            command=self.view_invoice,
+            bg="#2196F3",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=20
+        )
+        view_button.pack(side="right", padx=10, pady=10)
 
         # Load invoices
         self.load_invoices()
@@ -38,8 +93,17 @@ class InvoiceManagementView(tk.Toplevel):
 
         invoices = InvoiceController.get_all_invoices()
         for invoice in invoices:
-            self.invoice_table.insert("", "end", values=(invoice["invoice_id"], invoice["invoice_number"], invoice["client_name"],
-                                                         invoice["date"], f"Rs.{invoice['total_amount']:.2f}"))
+            self.invoice_table.insert(
+                "",
+                "end",
+                values=(
+                    invoice["invoice_id"],
+                    invoice["invoice_number"],
+                    invoice["client_name"],
+                    invoice["date"],
+                    f"Rs.{invoice['total_amount']:.2f}"
+                )
+            )
 
     def view_invoice(self):
         """Open the Invoice View with the selected invoice ID."""
@@ -51,7 +115,7 @@ class InvoiceManagementView(tk.Toplevel):
             invoice_data, items = InvoiceController.get_invoice_details(invoice_id)
 
             # Create a simplified InvoiceView
-            invoice_view = InvoiceView(self)
+            invoice_view = InvoiceView(self,invoice_id=invoice_id)
             invoice_view.invoice_items = items
             invoice_view.show_invoice_bill_only(
                 invoice_id=invoice_id,
@@ -69,4 +133,3 @@ class InvoiceManagementView(tk.Toplevel):
             invoice_view.grab_set()  # Ensure modal-like behavior
         else:
             messagebox.showwarning("No Selection", "Please select an invoice to view.", parent=self)
-
