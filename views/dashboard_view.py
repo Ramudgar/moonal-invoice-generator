@@ -4,55 +4,88 @@ from views.product_view import ProductView
 from views.invoice_view import InvoiceView
 from views.invoice_management_view import InvoiceManagementView  # Placeholder for the invoice management view
 
+
 class DashboardView(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Moonal Udhyog PVT. LTD. - Invoice System")
+        self.configure(bg="#f0f8ff")  # Alice Blue as background for the main window
+        self.title("Moonal Udhyog PVT. LTD. - Invoice Management System")
         self.geometry("800x600")
-        self.configure(bg="#f0f0f5")  # Light background for better contrast
+        self.resizable(False, False)
 
-        # Add title label
+        # Title label with updated styling
         title_label = tk.Label(
             self,
-            text="Moonal Udhyog PVT. LTD. Invoice Management System",
-            font=("Arial", 16, "bold"),
-            bg="#f0f0f5"
+            text="Moonal Udhyog PVT. LTD.\nInvoice Management System",
+            font=("Helvetica", 18, "bold"),
+            bg="#f0f8ff",  # Matches the main window background
+            fg="#003366"  # Contrasting dark blue for readability
         )
-        title_label.pack(pady=20)
+        title_label.pack(pady=30)
 
-        # Create a frame for buttons
-        button_frame = tk.Frame(self, bg="#f0f0f5")
+        # Navigation buttons with modern design
+        self.create_button_frame()
+
+        # Footer section
+        self.create_footer()
+
+    def create_button_frame(self):
+        """Creates and displays the button frame for navigation."""
+        button_frame = tk.Frame(self, bg="#d6eaf8", relief="solid", bd=1)  # Light blue for distinction
         button_frame.pack(pady=40)
 
         # Define button styling
         style = ttk.Style()
-        style.configure("Dashboard.TButton", font=("Arial", 12), padding=10, width=20)
+        style.theme_use("clam")
+        style.configure(
+            "Dashboard.TButton",
+            font=("Helvetica", 12, "bold"),
+            padding=10,
+            width=25,
+            foreground="#ffffff",
+            background="#0059b3",
+            borderwidth=2,
+        )
+        style.map(
+            "Dashboard.TButton",
+            background=[("active", "#004080")],
+            foreground=[("active", "#f0f8ff")],
+        )
 
         # Buttons for navigation
-        product_button = ttk.Button(
-            button_frame, text="Manage Products", style="Dashboard.TButton", command=self.open_product_view
-        )
-        product_button.grid(row=0, column=0, padx=20, pady=10)
+        ttk.Button(
+            button_frame,
+            text="Manage Products",
+            style="Dashboard.TButton",
+            command=self.open_product_view
+        ).grid(row=0, column=0, padx=20, pady=10)
 
-        invoice_button = ttk.Button(
-            button_frame, text="Generate New Invoice", style="Dashboard.TButton", command=self.open_invoice_view
-        )
-        invoice_button.grid(row=1, column=0, padx=20, pady=10)
+        ttk.Button(
+            button_frame,
+            text="Generate New Invoice",
+            style="Dashboard.TButton",
+            command=self.open_invoice_view
+        ).grid(row=1, column=0, padx=20, pady=10)
 
-        view_invoice_button = ttk.Button(
-            button_frame, text="View Past Invoices", style="Dashboard.TButton", command=self.view_invoices
-        )
-        view_invoice_button.grid(row=2, column=0, padx=20, pady=10)
+        ttk.Button(
+            button_frame,
+            text="View Past Invoices",
+            style="Dashboard.TButton",
+            command=self.view_invoices
+        ).grid(row=2, column=0, padx=20, pady=10)
 
-        # Footer information
+    def create_footer(self):
+        """Creates the footer with company information."""
+        footer_frame = tk.Frame(self, bg="#003366")
+        footer_frame.pack(side="bottom", fill="x")
         footer_label = tk.Label(
-            self,
+            footer_frame,
             text="Moonal Udhyog PVT. LTD. © 2024 | All Rights Reserved",
-            font=("Arial", 10),
-            bg="#f0f0f5",
-            fg="grey"
+            font=("Helvetica", 10),
+            bg="#003366",
+            fg="#f0f8ff"
         )
-        footer_label.pack(side="bottom", pady=10)
+        footer_label.pack(pady=5)
 
     def open_product_view(self):
         """Open the product management view."""

@@ -4,13 +4,18 @@ from utils.invoice_utils import InvoiceUtils
  
 
 class InvoiceController:
+     
     @staticmethod
-    def create_invoice(invoice_number,client_name, client_contact, address, pan_no, items, vat_rate, discount, paid_amount):
+    def create_invoice(invoice_number, client_name, client_contact, address, pan_no, items, vat_rate, discount, paid_amount):
         conn = connect_db()
         cursor = conn.cursor()
-        date=datetime.now().strftime("%Y-%m-%d")
-         
+        date = datetime.now().strftime("%Y-%m-%d")
         
+        # Convert and validate item data to ensure proper calculations
+        for item in items:
+            item['quantity'] = int(item['quantity'])  # Ensure quantity is an integer
+            item['price_per_unit'] = float(item['price_per_unit'])  # Ensure price is a float
+
         # Calculate subtotal, VAT, discount, and due amount
         subtotal = sum(item['price_per_unit'] * item['quantity'] for item in items)
         discount = float(discount)
@@ -22,7 +27,7 @@ class InvoiceController:
         discount_amount = subtotal * (discount / 100)
         price_after_discount = subtotal - discount_amount
         vat_amount = price_after_discount * (vat_rate / 100)
-        total_amount = price_after_discount + vat_amount 
+        total_amount = price_after_discount + vat_amount
         due_amount = total_amount - paid_amount
 
         # Insert invoice data
@@ -43,6 +48,7 @@ class InvoiceController:
         conn.commit()
         conn.close()
         return invoice_id
+    
     
     @staticmethod
     def get_all_invoices():

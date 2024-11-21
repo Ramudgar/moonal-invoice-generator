@@ -88,75 +88,219 @@ class InvoiceView(tk.Toplevel):
             total_in_words = f"{rupees_in_words} Rupees"
 
         return total_in_words
-
     def create_invoice_form(self):
-        """Create fields for generating a new invoice."""
+        """Create fields for generating a new invoice with left-right aligned fields."""
 
-        # Heading for Client Details
-        tk.Label(self.left_frame, text="Enter Client Details Here", bg="#f0f0f5", font=("Arial", 12, "bold")).grid(
-            row=0, column=0, columnspan=2, padx=10, pady=(10, 20), sticky="w"
+        # Main frame for the form
+        main_frame = tk.Frame(self.left_frame, bg="#f0f0f5", relief="groove", bd=2)
+        main_frame.grid(row=0, column=0, columnspan=2, padx=20, pady=20, ipadx=10, ipady=10)
+
+        # Header for client details
+        tk.Label(
+            main_frame,
+            text="Enter Client Details",
+            bg="#003366",
+            fg="#ffffff",
+            font=("Arial", 16, "bold"),
+            padx=10,
+            pady=10,
+            relief="ridge"
+        ).grid(row=0, column=0, columnspan=4, sticky="ew", pady=(10, 20))
+
+        # Client Details Section
+        tk.Label(main_frame, text="Client Name", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=1, column=0, padx=10, pady=10, sticky="w"
         )
-
-        # Client Information Section
-        tk.Label(self.left_frame, text="Client Name", bg="#f0f0f5").grid(
-            row=1, column=0, padx=10, pady=10, sticky="w")
-        self.client_name_entry = tk.Entry(self.left_frame, width=25)
+        self.client_name_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
         self.client_name_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        tk.Label(self.left_frame, text="Client Contact", bg="#f0f0f5").grid(
-            row=2, column=0, padx=10, pady=10, sticky="w")
-        self.client_contact_entry = tk.Entry(self.left_frame, width=25)
-        self.client_contact_entry.grid(row=2, column=1, padx=10, pady=10)
+        tk.Label(main_frame, text="Client Contact", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=1, column=2, padx=10, pady=10, sticky="w"
+        )
+        self.client_contact_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.client_contact_entry.grid(row=1, column=3, padx=10, pady=10)
 
-        tk.Label(self.left_frame, text="Address", bg="#f0f0f5").grid(
-            row=3, column=0, padx=10, pady=10, sticky="w")
-        self.address_entry = tk.Entry(self.left_frame, width=25)
-        self.address_entry.grid(row=3, column=1, padx=10, pady=10)
+        tk.Label(main_frame, text="Address", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=2, column=0, padx=10, pady=10, sticky="w"
+        )
+        self.address_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.address_entry.grid(row=2, column=1, padx=10, pady=10)
 
-        tk.Label(self.left_frame, text="PAN No", bg="#f0f0f5").grid(
-            row=4, column=0, padx=10, pady=10, sticky="w")
-        self.pan_no_entry = tk.Entry(self.left_frame, width=25)
-        self.pan_no_entry.grid(row=4, column=1, padx=10, pady=10)
+        tk.Label(main_frame, text="PAN No.", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=2, column=2, padx=10, pady=10, sticky="w"
+        )
+        self.pan_no_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.pan_no_entry.grid(row=2, column=3, padx=10, pady=10)
 
         # Product Selection Section
-        tk.Label(self.left_frame, text="Select Product", bg="#f0f0f5").grid(
-            row=5, column=0, padx=10, pady=10, sticky="w")
+        tk.Label(main_frame, text="Select Product", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=3, column=0, padx=10, pady=10, sticky="w"
+        )
         self.product_list = ProductController.get_all_products()
-        self.product_dropdown = ttk.Combobox(self.left_frame, values=[
-                                             f"{p[1]} - {p[3]}" for p in self.product_list], width=23)
-        self.product_dropdown.grid(row=5, column=1, padx=10, pady=10)
+        self.product_dropdown = ttk.Combobox(
+            main_frame,
+            values=[f"{p[1]} - {p[3]}" for p in self.product_list],
+            font=("Arial", 12),
+            width=28
+        )
+        self.product_dropdown.grid(row=3, column=1, padx=10, pady=10)
 
-        tk.Label(self.left_frame, text="Quantity", bg="#f0f0f5").grid(
-            row=6, column=0, padx=10, pady=10, sticky="w")
-        self.quantity_entry = tk.Entry(self.left_frame, width=25)
-        self.quantity_entry.grid(row=6, column=1, padx=10, pady=10)
+        tk.Label(main_frame, text="Quantity", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=3, column=2, padx=10, pady=10, sticky="w"
+        )
+        self.quantity_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.quantity_entry.grid(row=3, column=3, padx=10, pady=10)
 
-        tk.Button(self.left_frame, text="Add Product", command=self.add_product,
-                  bg="#4CAF50", fg="white", width=15).grid(row=7, column=1, padx=10, pady=10)
+        tk.Button(
+            main_frame,
+            text="Add Product",
+            command=self.add_product,
+            bg="#4CAF50",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=20
+        ).grid(row=4, column=3, padx=10, pady=10, sticky="e")
 
         # VAT and Discount Section
-        tk.Label(self.left_frame, text="VAT Rate (%)", bg="#f0f0f5").grid(
-            row=8, column=0, padx=10, pady=10, sticky="w")
-        self.vat_rate_entry = tk.Entry(self.left_frame, width=25)
-        self.vat_rate_entry.insert(0, "13")  # Default VAT
-        self.vat_rate_entry.grid(row=8, column=1, padx=10, pady=10)
-
-        tk.Label(self.left_frame, text="Discount (%)", bg="#f0f0f5").grid(
-            row=9, column=0, padx=10, pady=10, sticky="w")
-        self.discount_entry = tk.Entry(self.left_frame, width=25)
-        self.discount_entry.insert(0, "0")  # Default discount
-        self.discount_entry.grid(row=9, column=1, padx=10, pady=10)
-
-        # Product List Section
-        tk.Label(self.left_frame, text="Added Products", bg="#f0f0f5", font=("Arial", 10, "bold")).grid(
-            row=10, column=0, columnspan=2, padx=10, pady=(20, 10), sticky="w"
+        tk.Label(main_frame, text="VAT Rate (%)", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=5, column=0, padx=10, pady=10, sticky="w"
         )
-        self.item_list = tk.Listbox(self.left_frame, width=50, height=5)
-        self.item_list.grid(row=11, column=0, columnspan=2, padx=10, pady=10)
+        self.vat_rate_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.vat_rate_entry.insert(0, "13")  # Default VAT
+        self.vat_rate_entry.grid(row=5, column=1, padx=10, pady=10)
 
-        # Generate Invoice Preview Button
-        tk.Button(self.left_frame, text="Generate Invoice Preview", command=self.generate_invoice_preview,
-                  bg="#2196F3", fg="white", width=20).grid(row=12, column=1, padx=10, pady=(10, 20))
+        tk.Label(main_frame, text="Discount (%)", bg="#f0f0f5", font=("Arial", 12)).grid(
+            row=5, column=2, padx=10, pady=10, sticky="w"
+        )
+        self.discount_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.discount_entry.insert(0, "0")  # Default discount
+        self.discount_entry.grid(row=5, column=3, padx=10, pady=10)
+
+        # Added Products Section
+        tk.Label(
+            main_frame,
+            text="Added Products",
+            bg="#003366",
+            fg="#ffffff",
+            font=("Arial", 14, "bold"),
+            padx=10,
+            pady=10
+        ).grid(row=6, column=0, columnspan=4, pady=(20, 10), sticky="ew")
+
+        # Treeview for displaying products
+        self.item_tree = ttk.Treeview(
+            main_frame,
+            columns=("Product", "HS Code", "Quantity", "Price"),
+            show="headings",
+            height=8
+        )
+        self.item_tree.grid(row=7, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+
+        self.item_tree.heading("Product", text="Product")
+        self.item_tree.heading("HS Code", text="HS Code")
+        self.item_tree.heading("Quantity", text="Quantity")
+        self.item_tree.heading("Price", text="Price")
+
+        self.item_tree.column("Product", width=200)
+        self.item_tree.column("HS Code", width=100)
+        self.item_tree.column("Quantity", width=80, anchor="center")
+        self.item_tree.column("Price", width=100, anchor="center")
+
+        # Buttons for actions
+        button_frame = tk.Frame(main_frame, bg="#f0f0f5")
+        button_frame.grid(row=8, column=0, columnspan=4, pady=20, sticky="ew")
+
+        tk.Button(
+            button_frame,
+            text="Remove Selected Product",
+            command=self.remove_selected_product,
+            bg="#F44336",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=20
+        ).grid(row=0, column=0, padx=10, pady=10)
+
+        tk.Button(
+            button_frame,
+            text="Generate Invoice Preview",
+            command=self.generate_invoice_preview,
+            bg="#2196F3",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=25
+        ).grid(row=0, column=1, padx=10, pady=10)
+
+    def add_product(self):
+        """Add a selected product to the Treeview."""
+        product_name = self.product_dropdown.get()
+        quantity = self.quantity_entry.get()
+
+        if not quantity.isdigit():
+            messagebox.showerror("Error", "Quantity must be a valid number.")
+            return
+
+        selected_product = next((p for p in self.product_list if f"{p[1]} - {p[3]}" == product_name), None)
+        if selected_product:
+            product_id, name, price_per_unit, hs_code = selected_product
+            total_price = float(price_per_unit) * int(quantity)
+            self.invoice_items.append({
+                "product_id": product_id,
+                "quantity": quantity,
+                "price_per_unit": price_per_unit,
+                "total_price": total_price,
+                "product_name": name,
+                "hs_code": hs_code
+            })
+            self.item_tree.insert(
+                "",
+                "end",
+                values=(name, hs_code, quantity, f"Rs. {total_price:.2f}")
+            )
+
+    def remove_selected_product(self):
+        """Remove the selected product from the Treeview."""
+        selected_item = self.item_tree.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "Please select a product to remove.")
+            return
+
+        self.item_tree.delete(selected_item)
+
+    # def add_product(self):
+    #     """Add a selected product to the invoice."""
+    #     product_name = self.product_dropdown.get()
+    #     quantity = int(self.quantity_entry.get())
+    #     selected_product = next((p for p in self.product_list if f"{
+    #                             p[1]} - {p[3]}" == product_name), None)
+
+    #     if selected_product:
+    #         product_id, name, price_per_unit, hs_code = selected_product
+    #         total_price = price_per_unit * quantity
+    #         self.invoice_items.append({
+    #             "product_id": product_id,
+    #             "quantity": quantity,
+    #             "price_per_unit": price_per_unit,
+    #             "total_price": total_price,
+    #             "product_name": name,
+    #             "hs_code": hs_code
+    #         })
+    #         self.item_list.insert(
+    #             tk.END, f"{name} - HS Code:{hs_code} - Qty: {quantity} - Price: Rs.{total_price}")
+
+    # def remove_product(self):
+    #     """Remove the selected product from the invoice."""
+    #     try:
+    #         # Get the selected item's index
+    #         selected_index = self.item_list.curselection()[0]
+    #         # Remove the selected item from `invoice_items`
+    #         del self.invoice_items[selected_index]
+    #         # Remove the selected item from the Listbox
+    #         self.item_list.delete(selected_index)
+    #     except IndexError:
+    #         tk.messagebox.showerror(
+    #             "Error", "No product selected for removal.")
+
+
 
     def load_invoice_details(self):
         """Load and display details of the selected invoice."""
@@ -178,26 +322,7 @@ class InvoiceView(tk.Toplevel):
         except ValueError as e:
             messagebox.showerror("Error", str(e), parent=self)
 
-    def add_product(self):
-        """Add a selected product to the invoice."""
-        product_name = self.product_dropdown.get()
-        quantity = int(self.quantity_entry.get())
-        selected_product = next((p for p in self.product_list if f"{
-                                p[1]} - {p[3]}" == product_name), None)
-
-        if selected_product:
-            product_id, name, price_per_unit, hs_code = selected_product
-            total_price = price_per_unit * quantity
-            self.invoice_items.append({
-                "product_id": product_id,
-                "quantity": quantity,
-                "price_per_unit": price_per_unit,
-                "total_price": total_price,
-                "product_name": name,
-                "hs_code": hs_code
-            })
-            self.item_list.insert(
-                tk.END, f"{name} - HS Code:{hs_code} - Qty: {quantity} - Price: Rs.{total_price}")
+    
 
     def generate_invoice_preview(self):
         """Generate and display an invoice preview without payment details initially."""
