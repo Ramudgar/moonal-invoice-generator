@@ -953,12 +953,12 @@ class InvoiceView(tk.Toplevel):
             max_width = 300
             y_position += 45
             text_width = c.stringWidth(
-                f"Total in Words: {total_in_words}", "Courier-Oblique", 10)
+                f"Total in Words: {total_in_words}", "Courier", 10)
 
             if text_width > max_width:
                 # Wrap the text if it exceeds the max width
                 wrapped_lines = simpleSplit(
-                    f"Total in Words: {total_in_words}", "Courier-Oblique", 10, max_width)
+                    f"Total in Words: {total_in_words}", "Courier", 10, max_width)
                 for line in wrapped_lines:
                     c.drawString(40, y_position, line)
                     y_position -= 15

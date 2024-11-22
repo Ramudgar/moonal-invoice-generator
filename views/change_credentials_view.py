@@ -2,7 +2,6 @@
 import tkinter as tk
 from tkinter import messagebox
 from controllers.authController import AuthController
-from views.dashboard_view import DashboardView
 
 class ChangeCredentialsView(tk.Tk):
     def __init__(self):
@@ -41,12 +40,15 @@ class ChangeCredentialsView(tk.Tk):
             AuthController.change_credentials(current_username, current_password, new_username, new_password)
             messagebox.showinfo("Success", "Credentials updated successfully.", parent=self)
             self.destroy()
-            self.open_dashboard()
+            # self.open_dashboard()
 
         except ValueError as e:
             messagebox.showerror("Error", str(e), parent=self)
 
     def open_dashboard(self):
-        """Open the dashboard after successful login."""
+        from views.dashboard_view import DashboardView
+
+        """Ensure the correct appearance is set before opening."""
         dashboard = DashboardView()
+        dashboard.configure(bg="#f0f8ff")  # Ensure the correct background color
         dashboard.mainloop()

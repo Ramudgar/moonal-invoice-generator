@@ -41,3 +41,25 @@ class AuthController:
             return True
         else:
             raise ValueError("Current username or password is incorrect.")
+        
+    @staticmethod
+    def forgot_password(username,pin1,pin2, new_password):
+        """Reset user password if username and PINs are correct."""
+        user = User.get_user(username)
+        if user and str(pin1) == "543210" and str(pin2) == "852036":
+            User.update_user(username, username, new_password)
+            print("Password reset successfully.")
+            return True
+        else:
+            raise ValueError("Invalid username or PINs.")
+        
+    @staticmethod
+    def get_user(username):
+        """Get user details by username."""
+        return User.get_user(username)
+ 
+
+ 
+
+
+

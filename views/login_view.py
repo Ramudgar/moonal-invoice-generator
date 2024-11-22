@@ -1,34 +1,77 @@
-# views/login_view.py
 import tkinter as tk
 from tkinter import messagebox
 from controllers.authController import AuthController
 from views.dashboard_view import DashboardView
 from views.change_credentials_view import ChangeCredentialsView
+from views.forgot_password_view import ForgotPasswordView
 
 
 class LoginView(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Login")
-        self.geometry("400x300")
-        self.configure(bg="#f0f0f5")
+        self.title("Login - Moonal Udhyog PVT. LTD.")
+        self.geometry("500x400")
+        self.configure(bg="#003366")  # Dark blue background
 
-        tk.Label(self, text="Login", font=(
-            "Arial", 16, "bold"), bg="#f0f0f5").pack(pady=20)
+        # Frame for Login Content
+        login_frame = tk.Frame(self, bg="#f0f0f5", relief="raised", bd=2)
+        login_frame.place(relx=0.5, rely=0.5, anchor="center", width=400, height=350)
+
+        # Title
+        tk.Label(
+            login_frame,
+            text="Welcome to Moonal Udhyog",
+            font=("Helvetica", 16, "bold"),
+            bg="#f0f0f5",
+            fg="#003366"
+        ).pack(pady=20)
 
         # Username field
-        tk.Label(self, text="Username", bg="#f0f0f5").pack()
-        self.username_entry = tk.Entry(self, width=30)
+        tk.Label(
+            login_frame, text="Username", font=("Arial", 12, "bold"), bg="#f0f0f5", fg="#003366"
+        ).pack(pady=5)
+        self.username_entry = tk.Entry(login_frame, font=("Arial", 12), width=30)
         self.username_entry.pack(pady=5)
 
         # Password field
-        tk.Label(self, text="Password", bg="#f0f0f5").pack()
-        self.password_entry = tk.Entry(self, width=30, show="*")
+        tk.Label(
+            login_frame, text="Password", font=("Arial", 12, "bold"), bg="#f0f0f5", fg="#003366"
+        ).pack(pady=5)
+        self.password_entry = tk.Entry(login_frame, font=("Arial", 12), width=30, show="*")
         self.password_entry.pack(pady=5)
 
         # Login button
-        tk.Button(self, text="Login", command=self.login,
-                  bg="#4CAF50", fg="white", width=15).pack(pady=20)
+        tk.Button(
+            login_frame,
+            text="Login",
+            command=self.login,
+            bg="#4CAF50",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=20,
+            relief="groove",
+            bd=2
+        ).pack(pady=15)
+
+        # Forgot Password button
+        tk.Button(
+            login_frame,
+            text="Forgot Password?",
+            command=self.open_forgot_password,
+            bg="#FF9800",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            relief="flat"
+        ).pack(pady=5)
+
+        # Footer Label
+        tk.Label(
+            self,
+            text="Moonal Udhyog PVT. LTD. © 2024",
+            font=("Helvetica", 10),
+            bg="#003366",
+            fg="#f0f8ff"
+        ).pack(side="bottom", pady=10)
 
     def login(self):
         """Handle login logic."""
@@ -41,18 +84,14 @@ class LoginView(tk.Tk):
 
             # Check if the user is using default credentials
             if username == "moonal@invoice" and password == "invoice@user":
-
                 if AuthController.is_default_user():
-
                     # Enforce username and password change for default user
                     messagebox.showinfo(
                         "Default Credentials",
                         "You are using default credentials. Please update your username and password.",
                     )
                     self.open_change_credentials_view()
-
                 else:
-                    # alert the user that the credentials don't match
                     messagebox.showerror(
                         "Credentials do not match",
                         "Please enter the correct username and password.",
@@ -62,7 +101,8 @@ class LoginView(tk.Tk):
                 self.open_dashboard()
         else:
             messagebox.showerror(
-                "Login Failed", "Invalid username or password.", parent=self)
+                "Login Failed", "Invalid username or password.", parent=self
+            )
 
     def open_dashboard(self):
         """Open the dashboard after successful login."""
@@ -73,3 +113,8 @@ class LoginView(tk.Tk):
         """Open the view to change username and password."""
         change_credentials_view = ChangeCredentialsView()
         change_credentials_view.mainloop()
+
+    def open_forgot_password(self):
+        """Open the Forgot Password window."""
+        forgot_password_view = ForgotPasswordView()
+        forgot_password_view.mainloop()

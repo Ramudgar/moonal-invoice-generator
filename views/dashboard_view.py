@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from views.product_view import ProductView
 from views.invoice_view import InvoiceView
-from views.invoice_management_view import InvoiceManagementView  # Placeholder for the invoice management view
+from views.invoice_management_view import InvoiceManagementView
+from views.change_credentials_view import ChangeCredentialsView  # Import the Change Credentials View
 
 
 class DashboardView(tk.Tk):
@@ -12,6 +13,7 @@ class DashboardView(tk.Tk):
         self.title("Moonal Udhyog PVT. LTD. - Invoice Management System")
         self.geometry("800x600")
         self.resizable(False, False)
+
 
         # Title label with updated styling
         title_label = tk.Label(
@@ -74,6 +76,13 @@ class DashboardView(tk.Tk):
             command=self.view_invoices
         ).grid(row=2, column=0, padx=20, pady=10)
 
+        ttk.Button(
+            button_frame,
+            text="Change Password",
+            style="Dashboard.TButton",
+            command=self.change_password
+        ).grid(row=3, column=0, padx=20, pady=10)  # Added Change Password Button
+
     def create_footer(self):
         """Creates the footer with company information."""
         footer_frame = tk.Frame(self, bg="#003366")
@@ -98,3 +107,7 @@ class DashboardView(tk.Tk):
     def view_invoices(self):
         """Open the past invoices management view."""
         InvoiceManagementView(self)  # Replace with actual implementation
+
+    def change_password(self):
+        """Open the Change Password View."""
+        ChangeCredentialsView()  # Open the Change Credentials View
