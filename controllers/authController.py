@@ -2,6 +2,7 @@
 
 from models.user import User
 
+
 class AuthController:
     @staticmethod
     def initialize_users():
@@ -15,6 +16,19 @@ class AuthController:
         """Authenticate user credentials."""
         user = User.get_user(username)
         if user and user[2] == password:  # Assuming user[2] is the password column
+            return True
+        return False
+
+    @staticmethod
+    def is_default_user():
+        """
+        Check if the current logged-in user is using the default credentials.
+
+        Returns:
+            bool: True if the default username and password are being used, False otherwise.
+        """
+        user = User.get_user("moonal@invoice")
+        if user and user[2] == "invoice@user" and user[3] == 0:  # Check if is_updated is 0
             return True
         return False
 

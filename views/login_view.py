@@ -13,7 +13,8 @@ class LoginView(tk.Tk):
         self.geometry("400x300")
         self.configure(bg="#f0f0f5")
 
-        tk.Label(self, text="Login", font=("Arial", 16, "bold"), bg="#f0f0f5").pack(pady=20)
+        tk.Label(self, text="Login", font=(
+            "Arial", 16, "bold"), bg="#f0f0f5").pack(pady=20)
 
         # Username field
         tk.Label(self, text="Username", bg="#f0f0f5").pack()
@@ -26,7 +27,8 @@ class LoginView(tk.Tk):
         self.password_entry.pack(pady=5)
 
         # Login button
-        tk.Button(self, text="Login", command=self.login, bg="#4CAF50", fg="white", width=15).pack(pady=20)
+        tk.Button(self, text="Login", command=self.login,
+                  bg="#4CAF50", fg="white", width=15).pack(pady=20)
 
     def login(self):
         """Handle login logic."""
@@ -39,17 +41,28 @@ class LoginView(tk.Tk):
 
             # Check if the user is using default credentials
             if username == "moonal@invoice" and password == "invoice@user":
-                # Enforce username and password change for default user
-                messagebox.showinfo(
-                    "Default Credentials",
-                    "You are using default credentials. Please update your username and password.",
-                )
-                self.open_change_credentials_view()
+
+                if AuthController.is_default_user():
+
+                    # Enforce username and password change for default user
+                    messagebox.showinfo(
+                        "Default Credentials",
+                        "You are using default credentials. Please update your username and password.",
+                    )
+                    self.open_change_credentials_view()
+
+                else:
+                    # alert the user that the credentials don't match
+                    messagebox.showerror(
+                        "Credentials do not match",
+                        "Please enter the correct username and password.",
+                    )
             else:
                 # Open the dashboard for updated credentials
                 self.open_dashboard()
         else:
-            messagebox.showerror("Login Failed", "Invalid username or password.", parent=self)
+            messagebox.showerror(
+                "Login Failed", "Invalid username or password.", parent=self)
 
     def open_dashboard(self):
         """Open the dashboard after successful login."""

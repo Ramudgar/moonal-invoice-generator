@@ -25,7 +25,7 @@ class User:
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE Users SET username = ?, password = ? WHERE username = ?",
+            "UPDATE Users SET username = ?, password = ?,is_updated=1 WHERE username = ?",
             (new_username, new_password, username)
         )
         conn.commit()

@@ -16,7 +16,8 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS Users (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
-            password TEXT
+            password TEXT,
+            is_updated INTEGER DEFAULT 0
         )
     ''')
 

@@ -512,43 +512,62 @@ class InvoiceView(tk.Toplevel):
         header_frame = tk.Frame(self.right_frame, bg="white")
         header_frame.pack(fill="x", padx=20, pady=(5, 5))
 
-        # Logo
+        # Logo on the Left
         if self.logo_image:
-            tk.Label(header_frame, image=self.logo_image,
-                     bg="white").pack(anchor="w", padx=(10, 20))
+            logo_label = tk.Label(header_frame, image=self.logo_image, bg="white")
+            logo_label.grid(row=0, column=0, rowspan=2, sticky="w", padx=(10, 20))
 
-        # Company Info
-        tk.Label(header_frame, text="MOONAL UDHYOG PVT. LTD.", font=(
+        # Company Name and Address in the Center
+        company_info_frame = tk.Frame(header_frame, bg="white")
+        company_info_frame.grid(row=0, column=1, rowspan=2, sticky="nsew")
+
+        tk.Label(company_info_frame, text="MOONAL UDHYOG PVT. LTD.", font=(
             "Arial", 14, "bold"), bg="white").pack(anchor="center")
-        tk.Label(header_frame, text="Golbazar-4, Siraha, Madhesh Pradesh, Nepal",
-                 font=("Arial", 10), bg="white").pack(anchor="center")
+        tk.Label(company_info_frame, text="Golbazar-4, Siraha, Madhesh Pradesh, Nepal",
+                font=("Arial", 10), bg="white").pack(anchor="center")
+
+        # VAT and Date on the Right
+        date_vat_frame = tk.Frame(header_frame, bg="white")
+        date_vat_frame.grid(row=0, column=2, sticky="ne")
+
+        tk.Label(date_vat_frame, text="VAT: 609764022", font=("Arial", 10),
+                bg="white").pack(anchor="e")
+        tk.Label(date_vat_frame, text=f"Date: {date}", font=("Arial", 10),
+                bg="white").pack(anchor="e")
+
+        # Adjust Column Weights for Proper Spacing
+        header_frame.grid_columnconfigure(0, weight=1)  # Left (Logo)
+        header_frame.grid_columnconfigure(1, weight=3)  # Center (Company Info)
+        header_frame.grid_columnconfigure(2, weight=1)  # Right (VAT and Date)
 
         # Invoice Number and Customer Info
         info_frame = tk.Frame(self.right_frame, bg="white")
         info_frame.pack(fill="x", padx=20, pady=10)
 
+        # Invoice Number
         tk.Label(info_frame, text="Invoice Number:", font=(
             "Arial", 10, "bold"), bg="white").grid(row=0, column=0, sticky="w")
-        tk.Label(info_frame, text=invoice_number, font=("Arial", 10), bg="white").grid(
-            row=0, column=1, sticky="w", padx=(10, 0))
+        tk.Label(info_frame, text=invoice_number, font=("Arial", 10),
+                bg="white").grid(row=0, column=1, sticky="w", padx=(10, 0))
 
+        # Customer Information
         tk.Label(info_frame, text="Customer Name:", font=(
             "Arial", 10, "bold"), bg="white").grid(row=1, column=0, sticky="w")
-        tk.Label(info_frame, text=client_name, font=("Arial", 10),
-                 bg="white").grid(row=1, column=1, sticky="w", padx=(10, 0))
+        tk.Label(info_frame, text=client_name, font=("Arial", 10), bg="white").grid(
+            row=1, column=1, sticky="w", padx=(10, 0))
 
         tk.Label(info_frame, text="Contact:", font=("Arial", 10, "bold"),
-                 bg="white").grid(row=1, column=2, sticky="w", padx=(20, 0))
-        tk.Label(info_frame, text=client_contact, font=("Arial", 10),
-                 bg="white").grid(row=1, column=3, sticky="w")
+                bg="white").grid(row=1, column=2, sticky="w", padx=(20, 0))
+        tk.Label(info_frame, text=client_contact, font=("Arial", 10), bg="white").grid(
+            row=1, column=3, sticky="w")
 
         tk.Label(info_frame, text="Address:", font=("Arial", 10, "bold"),
-                 bg="white").grid(row=2, column=0, sticky="w")
+                bg="white").grid(row=2, column=0, sticky="w")
         tk.Label(info_frame, text=address, font=("Arial", 10), bg="white").grid(
             row=2, column=1, columnspan=3, sticky="w", padx=(10, 0))
 
         tk.Label(info_frame, text="PAN No:", font=("Arial", 10, "bold"),
-                 bg="white").grid(row=3, column=0, sticky="w")
+                bg="white").grid(row=3, column=0, sticky="w")
         tk.Label(info_frame, text=pan_no, font=("Arial", 10), bg="white").grid(
             row=3, column=1, sticky="w", padx=(10, 0))
 
@@ -556,12 +575,13 @@ class InvoiceView(tk.Toplevel):
         item_frame = tk.Frame(self.right_frame, bg="white")
         item_frame.pack(fill="x", padx=20, pady=20)
 
-        headers = ["S.N", "HS Code", "Description",
-                   "Quantity", "Rate", "Amount"]
+        # Headers for the table
+        headers = ["S.N", "HS Code", "Description", "Quantity", "Rate", "Amount"]
         for i, header in enumerate(headers):
             tk.Label(item_frame, text=header, font=("Arial", 10, "bold"),
-                     bg="white", anchor="w").grid(row=0, column=i, padx=5, pady=(0, 5))
+                    bg="white", anchor="w").grid(row=0, column=i, padx=5, pady=(0, 5))
 
+        # Populate the table with items
         for index, item in enumerate(self.invoice_items, start=1):
             tk.Label(item_frame, text=index, bg="white").grid(
                 row=index, column=0, padx=5, sticky="w")
@@ -585,16 +605,18 @@ class InvoiceView(tk.Toplevel):
         price_after_discount = subtotal - discount_amount
         vat = price_after_discount * (vat_rate / 100)
         total = price_after_discount + vat
+        total_in_words = self.total_in_words(total)
 
+        # Subtotal
         tk.Label(summary_frame, text=f"Subtotal: Rs.{subtotal:.2f}", font=(
             "Arial", 10), bg="white").pack(anchor="e")
-        tk.Label(summary_frame, text=f"Discount ({discount}%): Rs.{
-                 discount_amount:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
-        tk.Label(summary_frame, text=f"VAT ({vat_rate}%): Rs.{
-                 vat:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"Discount ({discount}%): Rs.{discount_amount:.2f}", font=(
+            "Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"VAT ({vat_rate}%): Rs.{vat:.2f}", font=(
+            "Arial", 10), bg="white").pack(anchor="e")
         tk.Label(summary_frame, text=f"Total: Rs.{total:.2f}", font=(
             "Arial", 12, "bold"), bg="white").pack(anchor="e", pady=(5, 0))
-        tk.Label(summary_frame, text=f"Total in Words: {self.total_in_words(total)}", font=(
+        tk.Label(summary_frame, text=f"Total in Words: {total_in_words}", font=(
             "Arial", 10, "italic"), bg="white").pack(anchor="e", padx=10, pady=5)
         tk.Label(summary_frame, text=f"Paid Amount: Rs.{paid_amount:.2f}", font=(
             "Arial", 10), bg="white").pack(anchor="e")
@@ -603,9 +625,9 @@ class InvoiceView(tk.Toplevel):
 
         # Print Invoice Button
         tk.Button(self.right_frame, text="Print Invoice",
-                  command=lambda: self.print_invoice(
-                      invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, date),
-                  bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
+                command=lambda: self.print_invoice(invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, date),
+                bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
+
 
     def show_final_invoice_view(self, invoice_id, client_name, client_contact, address, pan_no, vat_rate, discount, paid_amount, due_amount):
         """Display the finalized version of the invoice with all specified details."""
