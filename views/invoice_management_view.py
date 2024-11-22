@@ -64,7 +64,8 @@ class InvoiceManagementView(tk.Toplevel):
         style.configure("Treeview", font=("Arial", 11))
 
         # Scrollbars for Treeview
-        scrollbar_y = ttk.Scrollbar(main_frame, orient="vertical", command=self.invoice_table.yview)
+        scrollbar_y = ttk.Scrollbar(
+            main_frame, orient="vertical", command=self.invoice_table.yview)
         scrollbar_y.pack(side="right", fill="y")
         self.invoice_table.configure(yscrollcommand=scrollbar_y.set)
 
@@ -112,10 +113,21 @@ class InvoiceManagementView(tk.Toplevel):
             invoice_id = self.invoice_table.item(selected_item, "values")[0]
 
             # Fetch invoice details and items
-            invoice_data, items = InvoiceController.get_invoice_details(invoice_id)
+            invoice_data, items = InvoiceController.get_invoice_details(
+                invoice_id)
 
             # Create a simplified InvoiceView
-            invoice_view = InvoiceView(self,invoice_id=invoice_id)
+            invoice_view = InvoiceView(self, invoice_id=invoice_id, invoice_number=invoice_data["invoice_number"],
+                                       client_name=invoice_data["client_name"],
+                                       client_contact=invoice_data["client_contact"],
+                                       address=invoice_data["address"],
+                                       pan_no=invoice_data["pan_no"],
+                                       vat_rate=invoice_data["vat_rate"],
+                                       discount=invoice_data["discount"],
+                                       subtotal=invoice_data["subtotal"],
+                                       paid_amount=invoice_data["paid_amount"],
+                                       due_amount=invoice_data["due_amount"],
+                                       date=invoice_data["date"])
             invoice_view.invoice_items = items
             invoice_view.show_invoice_bill_only(
                 invoice_id=invoice_id,
@@ -128,8 +140,10 @@ class InvoiceManagementView(tk.Toplevel):
                 discount=invoice_data["discount"],
                 subtotal=invoice_data["subtotal"],
                 paid_amount=invoice_data["paid_amount"],
-                due_amount=invoice_data["due_amount"]
+                due_amount=invoice_data["due_amount"],
+                date=invoice_data["date"]
             )
             invoice_view.grab_set()  # Ensure modal-like behavior
         else:
-            messagebox.showwarning("No Selection", "Please select an invoice to view.", parent=self)
+            messagebox.showwarning(
+                "No Selection", "Please select an invoice to view.", parent=self)

@@ -17,7 +17,7 @@ from utils.invoice_utils import InvoiceUtils
 
 
 class InvoiceView(tk.Toplevel):
-    def __init__(self, master=None, invoice_id=None):
+    def __init__(self, master=None, invoice_id=None, invoice_number=None, client_name=None, client_contact=None, address=None, pan_no=None, vat_rate=None, discount=None, subtotal=None, paid_amount=None, due_amount=None, date=None):
         super().__init__(master)
         self.title("Invoice Details" if invoice_id else "Generate Invoice")
         self.geometry("1000x700")
@@ -45,7 +45,8 @@ class InvoiceView(tk.Toplevel):
 
         # If an existing invoice_id is provided, load details
         if self.invoice_id:
-            self.load_invoice_details()
+            self.show_invoice_bill_only(invoice_id, invoice_number, client_name, client_contact, address,
+                                        pan_no, vat_rate, discount, subtotal, paid_amount, due_amount, date)
         else:
             self.create_invoice_form()
 
@@ -88,12 +89,15 @@ class InvoiceView(tk.Toplevel):
             total_in_words = f"{rupees_in_words} Rupees"
 
         return total_in_words
+
     def create_invoice_form(self):
         """Create fields for generating a new invoice with left-right aligned fields."""
 
         # Main frame for the form
-        main_frame = tk.Frame(self.left_frame, bg="#f0f0f5", relief="groove", bd=2)
-        main_frame.grid(row=0, column=0, columnspan=2, padx=20, pady=20, ipadx=10, ipady=10)
+        main_frame = tk.Frame(
+            self.left_frame, bg="#f0f0f5", relief="groove", bd=2)
+        main_frame.grid(row=0, column=0, columnspan=2,
+                        padx=20, pady=20, ipadx=10, ipady=10)
 
         # Header for client details
         tk.Label(
@@ -111,13 +115,15 @@ class InvoiceView(tk.Toplevel):
         tk.Label(main_frame, text="Client Name", bg="#f0f0f5", font=("Arial", 12)).grid(
             row=1, column=0, padx=10, pady=10, sticky="w"
         )
-        self.client_name_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.client_name_entry = tk.Entry(
+            main_frame, width=30, font=("Arial", 12))
         self.client_name_entry.grid(row=1, column=1, padx=10, pady=10)
 
         tk.Label(main_frame, text="Client Contact", bg="#f0f0f5", font=("Arial", 12)).grid(
             row=1, column=2, padx=10, pady=10, sticky="w"
         )
-        self.client_contact_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.client_contact_entry = tk.Entry(
+            main_frame, width=30, font=("Arial", 12))
         self.client_contact_entry.grid(row=1, column=3, padx=10, pady=10)
 
         tk.Label(main_frame, text="Address", bg="#f0f0f5", font=("Arial", 12)).grid(
@@ -148,7 +154,8 @@ class InvoiceView(tk.Toplevel):
         tk.Label(main_frame, text="Quantity", bg="#f0f0f5", font=("Arial", 12)).grid(
             row=3, column=2, padx=10, pady=10, sticky="w"
         )
-        self.quantity_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.quantity_entry = tk.Entry(
+            main_frame, width=30, font=("Arial", 12))
         self.quantity_entry.grid(row=3, column=3, padx=10, pady=10)
 
         tk.Button(
@@ -165,14 +172,16 @@ class InvoiceView(tk.Toplevel):
         tk.Label(main_frame, text="VAT Rate (%)", bg="#f0f0f5", font=("Arial", 12)).grid(
             row=5, column=0, padx=10, pady=10, sticky="w"
         )
-        self.vat_rate_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.vat_rate_entry = tk.Entry(
+            main_frame, width=30, font=("Arial", 12))
         self.vat_rate_entry.insert(0, "13")  # Default VAT
         self.vat_rate_entry.grid(row=5, column=1, padx=10, pady=10)
 
         tk.Label(main_frame, text="Discount (%)", bg="#f0f0f5", font=("Arial", 12)).grid(
             row=5, column=2, padx=10, pady=10, sticky="w"
         )
-        self.discount_entry = tk.Entry(main_frame, width=30, font=("Arial", 12))
+        self.discount_entry = tk.Entry(
+            main_frame, width=30, font=("Arial", 12))
         self.discount_entry.insert(0, "0")  # Default discount
         self.discount_entry.grid(row=5, column=3, padx=10, pady=10)
 
@@ -194,7 +203,8 @@ class InvoiceView(tk.Toplevel):
             show="headings",
             height=8
         )
-        self.item_tree.grid(row=7, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+        self.item_tree.grid(row=7, column=0, columnspan=4,
+                            padx=10, pady=10, sticky="nsew")
 
         self.item_tree.heading("Product", text="Product")
         self.item_tree.heading("HS Code", text="HS Code")
@@ -208,7 +218,8 @@ class InvoiceView(tk.Toplevel):
 
         # Buttons for actions
         self.button_frame = tk.Frame(main_frame, bg="#f0f0f5")
-        self.button_frame.grid(row=8, column=0, columnspan=4, pady=20, sticky="ew")
+        self.button_frame.grid(
+            row=8, column=0, columnspan=4, pady=20, sticky="ew")
 
         tk.Button(
             self.button_frame,
@@ -239,7 +250,8 @@ class InvoiceView(tk.Toplevel):
             messagebox.showerror("Error", "Quantity must be a valid number.")
             return
 
-        selected_product = next((p for p in self.product_list if f"{p[1]} - {p[3]}" == product_name), None)
+        selected_product = next((p for p in self.product_list if f"{
+                                p[1]} - {p[3]}" == product_name), None)
         if selected_product:
             product_id, name, price_per_unit, hs_code = selected_product
             total_price = float(price_per_unit) * int(quantity)
@@ -285,8 +297,6 @@ class InvoiceView(tk.Toplevel):
                 client_name, client_contact, address, pan_no, vat_rate, discount)
         except ValueError as e:
             messagebox.showerror("Error", str(e), parent=self)
-
-    
 
     def generate_invoice_preview(self):
         """Generate and display an invoice preview without payment details initially."""
@@ -357,8 +367,6 @@ class InvoiceView(tk.Toplevel):
         # Invoice Number and Customer Info
         info_frame = tk.Frame(self.right_frame, bg="white")
         info_frame.pack(fill="x", padx=20, pady=5)
-
-         
 
         # Customer Information in a structured two-column format
         tk.Label(info_frame, text="Customer Name:", font=(
@@ -438,26 +446,26 @@ class InvoiceView(tk.Toplevel):
         """Prompt the user to enter the paid amount after previewing the invoice."""
         # Add label and entry for Paid Amount in the button_frame
         tk.Label(
-            self.button_frame, 
-            text="Paid Amount:", 
-            bg="#f0f0f5", 
+            self.button_frame,
+            text="Paid Amount:",
+            bg="#f0f0f5",
             font=("Arial", 12)
         ).grid(row=1, column=0, padx=10, pady=10, sticky="e")
 
-        self.paid_amount_entry = tk.Entry(self.button_frame, width=20, font=("Arial", 12))
+        self.paid_amount_entry = tk.Entry(
+            self.button_frame, width=20, font=("Arial", 12))
         self.paid_amount_entry.grid(row=1, column=1, padx=10, pady=10)
 
         # Add Finalize Invoice button in the button_frame
         tk.Button(
-            self.button_frame, 
-            text="Finalize Invoice", 
+            self.button_frame,
+            text="Finalize Invoice",
             command=lambda: self.finalize_invoice(total_amount),
-            bg="#4CAF50", 
-            fg="white", 
+            bg="#4CAF50",
+            fg="white",
             font=("Arial", 12, "bold"),
             width=20
         ).grid(row=1, column=2, padx=10, pady=10)
-
 
     def finalize_invoice(self, total_amount):
         """Finalize the invoice by saving it to the database and printing."""
@@ -489,7 +497,7 @@ class InvoiceView(tk.Toplevel):
         except ValueError as e:
             messagebox.showerror("Error", str(e), parent=self)
 
-    def show_invoice_bill_only(self, invoice_id, invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, due_amount):
+    def show_invoice_bill_only(self, invoice_id, invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, due_amount, date):
         """Display the invoice bill only with a print button."""
 
         # Clear all existing widgets in the right frame
@@ -596,7 +604,7 @@ class InvoiceView(tk.Toplevel):
         # Print Invoice Button
         tk.Button(self.right_frame, text="Print Invoice",
                   command=lambda: self.print_invoice(
-                      invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount),
+                      invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, date),
                   bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
 
     def show_final_invoice_view(self, invoice_id, client_name, client_contact, address, pan_no, vat_rate, discount, paid_amount, due_amount):
@@ -639,8 +647,7 @@ class InvoiceView(tk.Toplevel):
                  bg="white").pack(anchor="e")
 
         # Date
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        tk.Label(date_vat_frame, text=f"Date: {date_str}", font=(
+        tk.Label(date_vat_frame, text=f"Date: {datetime.now().strftime("%Y-%m-%d")}", font=(
             "Arial", 10), bg="white").pack(anchor="e")
 
         # Adjust Column Weights for Proper Spacing
@@ -727,7 +734,7 @@ class InvoiceView(tk.Toplevel):
         # Label and Value for Discount
         tk.Label(summary_frame, text=f"Discount ({discount}%):", font=(
             "Arial", 10), bg="white").grid(row=1, column=0, sticky="w", padx=(0, 10))
-        tk.Label(summary_frame, text=f"-Rs.{discount_amount:.2f}", font=(
+        tk.Label(summary_frame, text=f"Rs.{discount_amount:.2f}", font=(
             "Arial", 10), bg="white").grid(row=1, column=1, sticky="e")
 
         # Label and Value for VAT
@@ -766,7 +773,7 @@ class InvoiceView(tk.Toplevel):
         tk.Button(self.right_frame, text="Print Invoice", command=self.print_invoice,
                   bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
 
-    def print_invoice(self, invoice_number=None, client_name=None, client_contact=None, address=None, pan_no=None, vat_rate=None, discount=None, subtotal=None, paid_amount=None):
+    def print_invoice(self, invoice_number=None, client_name=None, client_contact=None, address=None, pan_no=None, vat_rate=None, discount=None, subtotal=None, paid_amount=None, date=None):
         from reportlab.pdfbase.ttfonts import TTFont
         from reportlab.pdfbase import pdfmetrics
 
@@ -793,6 +800,7 @@ class InvoiceView(tk.Toplevel):
         paid_amount = paid_amount or float(self.paid_amount_entry.get())
         subtotal = subtotal or sum(item["total_price"]
                                    for item in self.invoice_items)
+        date = date or datetime.now().strftime("%Y-%m-%d")
 
         def draw_invoice_content(c, start_y):
             """Draw a single copy of the invoice starting from the given y-coordinate."""
@@ -823,7 +831,7 @@ class InvoiceView(tk.Toplevel):
 
             c.setFont("Courier", 10)
             c.drawString(450, start_y, f"Date: {
-                         datetime.now().strftime('%Y-%m-%d')}")
+                         date}")
 
             customer_info_y = start_y-70
             # Add the invoice title at the center
