@@ -1,16 +1,19 @@
-import tkinter as tk
+# main.py
 from config.database import create_tables
-from views.dashboard_view import DashboardView
+from controllers.authController import AuthController
+from views.login_view import LoginView
 
 def main():
-    # Initialize database tables
+    # Initialize all database tables
+    # Initialize the database
     create_tables()
 
-    # Setup main Tkinter window
-    root = DashboardView()
-    root.title("Moonal Udhyog PVT. LTD. - Invoice Generator")
-    root.geometry("800x600")
-    root.mainloop()
+    # Insert default user credentials
+    AuthController.initialize_users()
+
+    # Launch the Login View
+    app = LoginView()
+    app.mainloop()
 
 if __name__ == "__main__":
     main()

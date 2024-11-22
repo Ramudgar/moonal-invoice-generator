@@ -358,11 +358,7 @@ class InvoiceView(tk.Toplevel):
         info_frame = tk.Frame(self.right_frame, bg="white")
         info_frame.pack(fill="x", padx=20, pady=5)
 
-        # # Invoice Number
-        # tk.Label(info_frame, text="Invoice Number:", font=(
-        #     "Arial", 10, "bold"), bg="white").grid(row=0, column=0, sticky="w")
-        # tk.Label(info_frame, text=self.invoice_number, font=("Arial", 10),
-        #          bg="white").grid(row=0, column=1, sticky="w", padx=(10, 0))
+         
 
         # Customer Information in a structured two-column format
         tk.Label(info_frame, text="Customer Name:", font=(

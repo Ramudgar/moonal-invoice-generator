@@ -11,6 +11,15 @@ def create_tables():
     conn = connect_db()
     cursor = conn.cursor()
 
+    # Users Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Users (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT
+        )
+    ''')
+
     # Products Table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Products (
@@ -57,4 +66,3 @@ def create_tables():
 
     conn.commit()
     conn.close()
-
