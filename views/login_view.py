@@ -13,6 +13,8 @@ class LoginView(tk.Tk):
         self.geometry("500x400")
         self.configure(bg="#003366")  # Dark blue background
 
+        self.is_default_user = AuthController.is_default_user()
+
         # Frame for Login Content
         login_frame = tk.Frame(self, bg="#f0f0f5", relief="raised", bd=2)
         login_frame.place(relx=0.5, rely=0.5, anchor="center", width=400, height=350)
@@ -79,25 +81,19 @@ class LoginView(tk.Tk):
         password = self.password_entry.get()
 
         if AuthController.authenticate(username, password):
-            # Destroy the current login view
-            self.destroy()
-
             # Check if the user is using default credentials
             if username == "moonal@invoice" and password == "invoice@user":
-                if AuthController.is_default_user():
+                if self.is_default_user:
                     # Enforce username and password change for default user
                     messagebox.showinfo(
                         "Default Credentials",
                         "You are using default credentials. Please update your username and password.",
                     )
-                    self.open_change_credentials_view()
-                else:
-                    messagebox.showerror(
-                        "Credentials do not match",
-                        "Please enter the correct username and password.",
-                    )
+                    self.hide()
+                    self.open_change_credentials_view(self.is_default_user)
             else:
                 # Open the dashboard for updated credentials
+                self.destroy()
                 self.open_dashboard()
         else:
             messagebox.showerror(
@@ -109,12 +105,25 @@ class LoginView(tk.Tk):
         dashboard = DashboardView()
         dashboard.mainloop()
 
-    def open_change_credentials_view(self):
+
+    def open_change_credentials_view(self, is_default_user=False):
         """Open the view to change username and password."""
-        change_credentials_view = ChangeCredentialsView()
-        change_credentials_view.mainloop()
+        change_credentials_view = ChangeCredentialsView(is_default_user=is_default_user)
+        self.wait_window(change_credentials_view)  # Wait for the window to close
+        if not is_default_user:
+            self.open_dashboard()
+        else:
+            self.show()  # Show the login view again if default credentials were updated
 
     def open_forgot_password(self):
         """Open the Forgot Password window."""
         forgot_password_view = ForgotPasswordView()
         forgot_password_view.mainloop()
+
+    def hide(self):
+        """Hide the login window."""
+        self.withdraw()
+
+    def show(self):
+        """Show the login window."""
+        self.deiconify()

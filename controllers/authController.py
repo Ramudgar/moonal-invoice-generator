@@ -7,9 +7,10 @@ class AuthController:
     @staticmethod
     def initialize_users():
         """Insert default user credentials if no users exist."""
-        if not User.get_user("moonal@invoice"):
+        if not User.has_users():
             User.add_user("moonal@invoice", "invoice@user")
             print("Default user created.")
+
 
     @staticmethod
     def authenticate(username, password):

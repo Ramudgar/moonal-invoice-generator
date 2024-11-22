@@ -4,6 +4,16 @@ from config.database import connect_db
 
 class User:
     @staticmethod
+    def has_users():
+        """Check if any users exist in the database."""
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM Users")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count > 0
+    
+    @staticmethod
     def add_user(username, password):
         conn = connect_db()
         cursor = conn.cursor()
