@@ -7,7 +7,11 @@ class ForgotPasswordView(tk.Toplevel):
     def __init__(self, master=None):
         super().__init__(master)
         self.title("Forgot Password - Moonal Udhyog")
-        self.geometry("500x550")  # Increased height for better layout
+        # Manually maximize the window (cross-platform compatible)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
+        
         self.configure(bg="#003366")  # Dark blue background for a professional look
 
         # Frame for Forgot Password Content

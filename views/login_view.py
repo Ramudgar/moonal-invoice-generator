@@ -10,14 +10,19 @@ class LoginView(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Login - Moonal Udhyog PVT. LTD.")
-        self.geometry("500x400")
+
+        # Set the window to the screen size (manual maximization)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f"{screen_width}x{screen_height}")
+
         self.configure(bg="#003366")  # Dark blue background
 
         self.is_default_user = AuthController.is_default_user()
 
         # Frame for Login Content
         login_frame = tk.Frame(self, bg="#f0f0f5", relief="raised", bd=2)
-        login_frame.place(relx=0.5, rely=0.5, anchor="center", width=400, height=350)
+        login_frame.place(relx=0.5, rely=0.5, anchor="center", width=500, height=400)
 
         # Title
         tk.Label(
@@ -104,7 +109,6 @@ class LoginView(tk.Tk):
         """Open the dashboard after successful login."""
         dashboard = DashboardView()
         dashboard.mainloop()
-
 
     def open_change_credentials_view(self, is_default_user=False):
         """Open the view to change username and password."""

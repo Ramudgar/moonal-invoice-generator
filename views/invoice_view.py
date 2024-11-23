@@ -20,13 +20,17 @@ class InvoiceView(tk.Toplevel):
     def __init__(self, master=None, invoice_id=None, invoice_number=None, client_name=None, client_contact=None, address=None, pan_no=None, vat_rate=None, discount=None, subtotal=None, paid_amount=None, due_amount=None, date=None):
         super().__init__(master)
         self.title("Invoice Details" if invoice_id else "Generate Invoice")
-        self.geometry("1000x700")
-        self.configure(bg="#f0f0f5")
+        # Manually maximize the window (cross-platform compatible)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
+
+        self.configure(bg="#003366") 
         self.invoice_id = invoice_id
         self.invoice_items = []  # Holds the items added to the invoice
 
         # Left frame for invoice form, right frame for invoice preview
-        self.left_frame = tk.Frame(self, bg="#f0f0f5")
+        self.left_frame = tk.Frame(self, bg="#003366")
         self.left_frame.pack(side="left", fill="both",
                              expand=True, padx=20, pady=20)
 
@@ -809,6 +813,7 @@ class InvoiceView(tk.Toplevel):
 
         # Create a canvas for PDF
         c = canvas.Canvas(pdf_file_path, pagesize=A4)
+        c.setPageCompression(1)  
         width, height = A4
 
         # data to be displayed in the invoice
@@ -863,7 +868,7 @@ class InvoiceView(tk.Toplevel):
             c.drawCentredString(title_x, title_y, invoice_title)
 
             # Customer Info
-            c.setFont("Courier", 10)
+            c.setFont("Courier", 11)
 
             c.drawString(40, customer_info_y,
                          f"Bill No:{invoice_number}")
@@ -890,12 +895,12 @@ class InvoiceView(tk.Toplevel):
                        "Quantity", "Rate", "Amount"]
             x_positions = [40, 90, 160, 300, 370, 440]
             y_position = line_y_position_after_customer_info - 15
-            c.setFont("JetBrainsMono-Bold", 10)
+            c.setFont("JetBrainsMono-Bold", 11)
             for i, header in enumerate(headers):
                 c.drawString(x_positions[i], y_position, header)
 
             # Populate the table with items
-            c.setFont("Courier", 10)
+            c.setFont("Courier", 11)
             for index, item in enumerate(self.invoice_items, start=1):
                 y_position -= 15
                 c.drawString(x_positions[0], y_position, str(index))
@@ -925,40 +930,41 @@ class InvoiceView(tk.Toplevel):
             total_in_words = self.total_in_words(total)
 
             due_amount = total - paid_amount
+            x_positions=370
 
-            c.drawString(370, y_position, "Subtotal:")
-            c.drawRightString(540, y_position, f"Rs.{subtotal:.2f}")
+            c.drawString(x_positions, y_position, "Subtotal:")
+            c.drawRightString(550, y_position, f"Rs.{subtotal:.2f}")
             y_position -= 15
-            c.drawString(370, y_position, f"Discount ({
+            c.drawString(x_positions, y_position, f"Discount ({
                          discount}%):")
-            c.drawRightString(540, y_position, f"Rs.{discount_amount:.2f}")
+            c.drawRightString(550, y_position, f"Rs.{discount_amount:.2f}")
             y_position -= 15
-            c.drawString(370, y_position,
+            c.drawString(x_positions, y_position,
                          f"VAT ({vat_rate}%):")
-            c.drawRightString(540, y_position, f"Rs.{vat:.2f}")
+            c.drawRightString(550, y_position, f"Rs.{vat:.2f}")
             y_position -= 15
             c.setFont("JetBrainsMono-Bold", 11)
-            c.drawString(370, y_position, "Total:")
-            c.setFont("Helvetica-Bold", 10)
-            c.drawRightString(540, y_position, f"Rs.{total:.2f}")
+            c.drawString(x_positions, y_position, "Total:")
+            c.setFont("Helvetica-Bold", 11)
+            c.drawRightString(550, y_position, f"Rs.{total:.2f}")
             y_position -= 15
-            c.setFont("Courier", 10)
-            c.drawString(370, y_position, "Paid amount:")
-            c.drawRightString(540, y_position, f"Rs.{paid_amount:.2f}")
+            c.setFont("Courier", 11)
+            c.drawString(x_positions, y_position, "Paid amount:")
+            c.drawRightString(550, y_position, f"Rs.{paid_amount:.2f}")
             y_position -= 15
-            c.drawString(370, y_position, "Due amount:")
-            c.drawRightString(540, y_position, f"Rs.{due_amount:.2f}")
+            c.drawString(x_positions, y_position, "Due amount:")
+            c.drawRightString(550, y_position, f"Rs.{due_amount:.2f}")
 
             # Total in Words
             max_width = 300
             y_position += 45
             text_width = c.stringWidth(
-                f"Total in Words: {total_in_words}", "Courier", 10)
+                f"Total in Words: {total_in_words}", "Courier", 11)
 
             if text_width > max_width:
                 # Wrap the text if it exceeds the max width
                 wrapped_lines = simpleSplit(
-                    f"Total in Words: {total_in_words}", "Courier", 10, max_width)
+                    f"Total in Words: {total_in_words}", "Courier", 11, max_width)
                 for line in wrapped_lines:
                     c.drawString(40, y_position, line)
                     y_position -= 15
@@ -968,7 +974,7 @@ class InvoiceView(tk.Toplevel):
 
             # Signature Section
             y_position -= 30
-            c.setFont("Courier", 10)
+            c.setFont("Courier", 11)
             c.drawString(40, y_position, "Accountant:")
             c.setDash(1, 2)
             c.line(120, y_position, 200, y_position)

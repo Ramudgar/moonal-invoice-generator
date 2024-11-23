@@ -9,19 +9,22 @@ from views.change_credentials_view import ChangeCredentialsView  # Import the Ch
 class DashboardView(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.configure(bg="#f0f8ff")  # Alice Blue as background for the main window
         self.title("Moonal Udhyog PVT. LTD. - Invoice Management System")
-        self.geometry("800x600")
-        self.resizable(False, False)
 
+        # Manually maximize the window (cross-platform compatible)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
+
+        self.configure(bg="#003366")  # Match background with login view
 
         # Title label with updated styling
         title_label = tk.Label(
             self,
             text="Moonal Udhyog PVT. LTD.\nInvoice Management System",
             font=("Helvetica", 18, "bold"),
-            bg="#f0f8ff",  # Matches the main window background
-            fg="#003366"  # Contrasting dark blue for readability
+            bg="#003366",  # Matches the main window background
+            fg="#f0f8ff"  # Contrasting white for readability
         )
         title_label.pack(pady=30)
 
@@ -33,8 +36,8 @@ class DashboardView(tk.Tk):
 
     def create_button_frame(self):
         """Creates and displays the button frame for navigation."""
-        button_frame = tk.Frame(self, bg="#d6eaf8", relief="solid", bd=1)  # Light blue for distinction
-        button_frame.pack(pady=40)
+        button_frame = tk.Frame(self, bg="#004080", relief="solid", bd=1)  # Darker blue for button frame
+        button_frame.place(relx=0.5, rely=0.5, anchor="center")  # Centered in the screen
 
         # Define button styling
         style = ttk.Style()
@@ -50,7 +53,7 @@ class DashboardView(tk.Tk):
         )
         style.map(
             "Dashboard.TButton",
-            background=[("active", "#004080")],
+            background=[("active", "#003366")],  # Matches hover to darker blue
             foreground=[("active", "#f0f8ff")],
         )
 

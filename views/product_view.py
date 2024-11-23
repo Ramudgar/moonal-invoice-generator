@@ -7,7 +7,11 @@ class ProductView(tk.Toplevel):
     def __init__(self, master=None):
         super().__init__(master)
         self.title("Product Management")
-        self.geometry("850x550")
+        # Manually maximize the window (cross-platform compatible)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
+        
         self.configure(bg="#f0f8ff")  # Light blue background for consistency
 
         # Title Label
