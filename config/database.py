@@ -2,26 +2,44 @@ import os
 import sqlite3
 import sys
 
-# Get the persistent directory for the database
 def get_persistent_db_path():
-    if sys.platform == "win32":
-        # For Windows, store in AppData
-        base_dir = os.getenv('APPDATA', os.path.expanduser('~'))
-        db_dir = os.path.join(base_dir, "MoonalUdhyog")
+    """Determine the database path based on the running environment."""
+    # Check if running as a packaged app (PyInstaller sets `sys._MEIPASS`)
+    if hasattr(sys, "_MEIPASS"):
+        # Packaged app: Use AppData (Windows) or ~/.moonal_udhyog (Linux/Mac)
+        if sys.platform == "win32":
+            # For Windows, store in AppData
+            base_dir = os.getenv("APPDATA", os.path.expanduser("~"))
+            db_dir = os.path.join(base_dir, "MoonalUdhyog")
+        else:
+            # For Linux/macOS, store in the user's home directory
+            base_dir = os.path.expanduser("~")
+            db_dir = os.path.join(base_dir, ".moonal_udhyog")
     else:
-        # For Linux/macOS, store in the user's home directory
-        base_dir = os.path.expanduser('~')
-        db_dir = os.path.join(base_dir, ".moonal_udhyog")
+        # Development mode: Store in the `db` folder outside the `config` folder
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        db_dir = os.path.join(base_dir, "db")
 
     # Ensure the directory exists
     if not os.path.exists(db_dir):
         os.makedirs(db_dir)
 
     # Return the full path to the database file
-    return os.path.join(db_dir, "moonal_udyhog.db")
+    return os.path.join(db_dir, "moonal_udhyog.db")
 
 # Get the database path
 DB_PATH = get_persistent_db_path()
+
+def connect_db():
+    """Connect to the SQLite database, creating it if necessary."""
+    try:
+        # Connect to the persistent SQLite database
+        conn = sqlite3.connect(DB_PATH)
+        print(f"Database connection successful! Database path: {DB_PATH}")
+        return conn
+    except sqlite3.Error as e:
+        print(f"Error connecting to database: {e}")
+        return None
 
 def connect_db():
     """Connect to the SQLite database, creating it if necessary."""
