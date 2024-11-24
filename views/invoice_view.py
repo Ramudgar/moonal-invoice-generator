@@ -852,11 +852,11 @@ class InvoiceView(tk.Toplevel):
             c.drawString(40, start_y-40, "Vat Reg. No: 609764022")
             c.setFont("JetBrainsMono-Bold", 14)
             c.drawCentredString(title_x, start_y, "MOONAL UDHYOG PVT. LTD.")
-            c.setFont("Courier", 10)
+            c.setFont("Courier", 11)
             c.drawCentredString(title_x, start_y - 15,
                                 "Golbazar-4, Siraha, Madhesh Pradesh, Nepal")
 
-            c.setFont("Courier", 10)
+            c.setFont("Courier", 11)
             c.drawString(450, start_y, f"Date: {
                          date}")
 

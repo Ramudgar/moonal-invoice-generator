@@ -28,45 +28,6 @@ class InvoiceManagementView(tk.Toplevel):
         )
         heading_label.pack(fill="x", pady=(0, 20))
 
-        # Search Frame
-        search_frame = tk.Frame(self, bg="#f0f0f5")
-        search_frame.pack(fill="x", padx=20, pady=10)
-
-        tk.Label(
-            search_frame,
-            text="Search by Client Name or Invoice Number:",
-            font=("Arial", 12),
-            bg="#f0f0f5",
-            fg="#003366"
-        ).pack(side="left", padx=10)
-
-        self.search_entry = tk.Entry(search_frame, font=("Arial", 12), width=30)
-        self.search_entry.pack(side="left", padx=10)
-
-        search_button = tk.Button(
-            search_frame,
-            text="Search",
-            command=self.search_invoices,
-            font=("Arial", 12),
-            bg="#4CAF50",
-            fg="white",
-            relief="groove",
-            bd=2
-        )
-        search_button.pack(side="left", padx=10)
-
-        refresh_button = tk.Button(
-            search_frame,
-            text="Refresh",
-            command=self.load_invoices,
-            font=("Arial", 12),
-            bg="#2196F3",
-            fg="white",
-            relief="groove",
-            bd=2
-        )
-        refresh_button.pack(side="left", padx=10)
-
         # Main frame for table and buttons
         main_frame = tk.Frame(self, bg="#ffffff", relief="groove", bd=2)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
@@ -127,16 +88,7 @@ class InvoiceManagementView(tk.Toplevel):
         )
         view_button.pack(side="left", padx=10, pady=10)
 
-        delete_button = tk.Button(
-            action_frame,
-            text="Delete Invoice",
-            command=self.delete_invoice,
-            bg="#F44336",
-            fg="white",
-            font=("Arial", 12, "bold"),
-            width=15
-        )
-        delete_button.pack(side="left", padx=10, pady=10)
+         
 
         # Load invoices
         self.load_invoices()
@@ -160,27 +112,7 @@ class InvoiceManagementView(tk.Toplevel):
                 )
             )
 
-    def search_invoices(self):
-        """Search invoices based on user input."""
-        query = self.search_entry.get().strip()
-        if not query:
-            messagebox.showinfo("Search", "Please enter a search term.", parent=self)
-            return
-
-        filtered_invoices = InvoiceController.search_invoices(query)
-        self.invoice_table.delete(*self.invoice_table.get_children())
-        for invoice in filtered_invoices:
-            self.invoice_table.insert(
-                "",
-                "end",
-                values=(
-                    invoice["invoice_id"],
-                    invoice["invoice_number"],
-                    invoice["client_name"],
-                    invoice["date"],
-                    f"Rs.{invoice['total_amount']:.2f}"
-                )
-            )
+    
 
     def view_invoice(self):
         """Open the Invoice View with the selected invoice ID."""
@@ -224,18 +156,4 @@ class InvoiceManagementView(tk.Toplevel):
             messagebox.showwarning(
                 "No Selection", "Please select an invoice to view.", parent=self)
 
-    def delete_invoice(self):
-        """Delete the selected invoice."""
-        selected_item = self.invoice_table.selection()
-        if not selected_item:
-            messagebox.showwarning(
-                "No Selection", "Please select an invoice to delete.", parent=self)
-            return
-
-        invoice_id = self.invoice_table.item(selected_item, "values")[0]
-        confirm = messagebox.askyesno(
-            "Delete Invoice", f"Are you sure you want to delete Invoice ID {invoice_id}?", parent=self)
-        if confirm:
-            InvoiceController.delete_invoice(invoice_id)
-            messagebox.showinfo("Deleted", f"Invoice ID {invoice_id} has been deleted.", parent=self)
-            self.load_invoices()
+     
