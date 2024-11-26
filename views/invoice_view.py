@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from controllers.invoice_controller import InvoiceController
 from controllers.product_controller import ProductController
 import os
+import sys
 import subprocess
 import platform
 from reportlab.lib.pagesizes import A4
@@ -23,9 +24,10 @@ class InvoiceView(tk.Toplevel):
         # Manually maximize the window (cross-platform compatible)
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
+        # Set to full screen dimensions
+        self.geometry(f"{screen_width}x{screen_height}")
 
-        self.configure(bg="#003366") 
+        self.configure(bg="#003366")
         self.invoice_id = invoice_id
         self.invoice_items = []  # Holds the items added to the invoice
 
@@ -518,8 +520,10 @@ class InvoiceView(tk.Toplevel):
 
         # Logo on the Left
         if self.logo_image:
-            logo_label = tk.Label(header_frame, image=self.logo_image, bg="white")
-            logo_label.grid(row=0, column=0, rowspan=2, sticky="w", padx=(10, 20))
+            logo_label = tk.Label(
+                header_frame, image=self.logo_image, bg="white")
+            logo_label.grid(row=0, column=0, rowspan=2,
+                            sticky="w", padx=(10, 20))
 
         # Company Name and Address in the Center
         company_info_frame = tk.Frame(header_frame, bg="white")
@@ -528,16 +532,16 @@ class InvoiceView(tk.Toplevel):
         tk.Label(company_info_frame, text="MOONAL UDHYOG PVT. LTD.", font=(
             "Arial", 14, "bold"), bg="white").pack(anchor="center")
         tk.Label(company_info_frame, text="Golbazar-4, Siraha, Madhesh Pradesh, Nepal",
-                font=("Arial", 10), bg="white").pack(anchor="center")
+                 font=("Arial", 10), bg="white").pack(anchor="center")
 
         # VAT and Date on the Right
         date_vat_frame = tk.Frame(header_frame, bg="white")
         date_vat_frame.grid(row=0, column=2, sticky="ne")
 
         tk.Label(date_vat_frame, text="VAT: 609764022", font=("Arial", 10),
-                bg="white").pack(anchor="e")
+                 bg="white").pack(anchor="e")
         tk.Label(date_vat_frame, text=f"Date: {date}", font=("Arial", 10),
-                bg="white").pack(anchor="e")
+                 bg="white").pack(anchor="e")
 
         # Adjust Column Weights for Proper Spacing
         header_frame.grid_columnconfigure(0, weight=1)  # Left (Logo)
@@ -552,7 +556,7 @@ class InvoiceView(tk.Toplevel):
         tk.Label(info_frame, text="Invoice Number:", font=(
             "Arial", 10, "bold"), bg="white").grid(row=0, column=0, sticky="w")
         tk.Label(info_frame, text=invoice_number, font=("Arial", 10),
-                bg="white").grid(row=0, column=1, sticky="w", padx=(10, 0))
+                 bg="white").grid(row=0, column=1, sticky="w", padx=(10, 0))
 
         # Customer Information
         tk.Label(info_frame, text="Customer Name:", font=(
@@ -561,17 +565,17 @@ class InvoiceView(tk.Toplevel):
             row=1, column=1, sticky="w", padx=(10, 0))
 
         tk.Label(info_frame, text="Contact:", font=("Arial", 10, "bold"),
-                bg="white").grid(row=1, column=2, sticky="w", padx=(20, 0))
+                 bg="white").grid(row=1, column=2, sticky="w", padx=(20, 0))
         tk.Label(info_frame, text=client_contact, font=("Arial", 10), bg="white").grid(
             row=1, column=3, sticky="w")
 
         tk.Label(info_frame, text="Address:", font=("Arial", 10, "bold"),
-                bg="white").grid(row=2, column=0, sticky="w")
+                 bg="white").grid(row=2, column=0, sticky="w")
         tk.Label(info_frame, text=address, font=("Arial", 10), bg="white").grid(
             row=2, column=1, columnspan=3, sticky="w", padx=(10, 0))
 
         tk.Label(info_frame, text="PAN No:", font=("Arial", 10, "bold"),
-                bg="white").grid(row=3, column=0, sticky="w")
+                 bg="white").grid(row=3, column=0, sticky="w")
         tk.Label(info_frame, text=pan_no, font=("Arial", 10), bg="white").grid(
             row=3, column=1, sticky="w", padx=(10, 0))
 
@@ -580,10 +584,11 @@ class InvoiceView(tk.Toplevel):
         item_frame.pack(fill="x", padx=20, pady=20)
 
         # Headers for the table
-        headers = ["S.N", "HS Code", "Description", "Quantity", "Rate", "Amount"]
+        headers = ["S.N", "HS Code", "Description",
+                   "Quantity", "Rate", "Amount"]
         for i, header in enumerate(headers):
             tk.Label(item_frame, text=header, font=("Arial", 10, "bold"),
-                    bg="white", anchor="w").grid(row=0, column=i, padx=5, pady=(0, 5))
+                     bg="white", anchor="w").grid(row=0, column=i, padx=5, pady=(0, 5))
 
         # Populate the table with items
         for index, item in enumerate(self.invoice_items, start=1):
@@ -629,9 +634,9 @@ class InvoiceView(tk.Toplevel):
 
         # Print Invoice Button
         tk.Button(self.right_frame, text="Print Invoice",
-                command=lambda: self.print_invoice(invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, date),
-                bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
-
+                  command=lambda: self.print_invoice(
+                      invoice_number, client_name, client_contact, address, pan_no, vat_rate, discount, subtotal, paid_amount, date),
+                  bg="#FF9800", fg="white", width=15).pack(anchor="e", padx=20, pady=10)
 
     def show_final_invoice_view(self, invoice_id, client_name, client_contact, address, pan_no, vat_rate, discount, paid_amount, due_amount):
         """Display the finalized version of the invoice with all specified details."""
@@ -804,16 +809,100 @@ class InvoiceView(tk.Toplevel):
         from reportlab.pdfbase import pdfmetrics
 
         # Register the JetBrainsMono-Bold font
-        pdfmetrics.registerFont(
-            TTFont("JetBrainsMono-Bold", "JetBrainsMono-Bold.ttf"))
-        """Generate a PDF of the invoice, show a preview, and allow printing based on the OS."""
 
+        def resource_path(resource_name):
+            """
+            Get the absolute path to a resource file.
+            Dynamically handles files for both development and production modes.
+            """
+            if hasattr(sys, "_MEIPASS"):  # Packaged app (PyInstaller)
+                base_path = sys._MEIPASS
+            else:  # Development mode
+                base_path = os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), ".."))
+            return os.path.join(base_path, resource_name)
+
+        # Register the JetBrainsMono-Bold font dynamically
+        font_path = resource_path("JetBrainsMono-Bold.ttf")
+        pdfmetrics.registerFont(TTFont("JetBrainsMono-Bold", font_path))
+
+        logo_path = resource_path("moonal_blackwhite.png")
         # Set up the PDF file path
-        pdf_file_path = "Invoice.pdf"
+
+        def get_pdf_output_path():
+            """Get the path to save the generated PDF."""
+            if hasattr(sys, "_MEIPASS"):
+                base_dir = os.path.expanduser("~")
+                output_dir = os.path.join(
+                    base_dir, "Documents", "Moonal-Invoice")
+            else:  # Development mode
+                base_dir = os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), ".."))
+                output_dir = os.path.join(base_dir, "outputs")
+
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
+            return os.path.join(output_dir, "Moonal-Invoice.pdf")
+
+        pdf_file_path = get_pdf_output_path()
+        print("PDF file path:", pdf_file_path)
+
+        def preview_pdf_with_browser(pdf_file_path):
+            """
+            Open the PDF in Google Chrome or Microsoft Edge based on the platform.
+            """
+            current_platform = platform.system()  # Get the current platform (e.g., Windows, Linux, Darwin)
+            try:
+                if current_platform == "Windows":  # Windows-specific
+                    print(f"Attempting to open PDF with Microsoft Edge on Windows: {pdf_file_path}")
+                    edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"  # Default Edge path
+                    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"  # Default Chrome path
+                    
+                    if os.path.exists(edge_path):
+                        subprocess.run([edge_path, pdf_file_path], check=True)
+                    elif os.path.exists(chrome_path):
+                        subprocess.run([chrome_path, pdf_file_path], check=True)
+                    else:
+                        raise FileNotFoundError("Neither Chrome nor Edge is installed in the default locations.")
+                
+                elif current_platform == "Linux":  # Linux-specific
+                    print(f"Attempting to open PDF with Google Chrome on Linux: {pdf_file_path}")
+                    # Try Chrome first, fallback to chromium-browser
+                    subprocess.run(["google-chrome", pdf_file_path], check=True)
+                
+                elif current_platform == "Darwin":  # macOS-specific
+                    print(f"Attempting to open PDF with Google Chrome on macOS: {pdf_file_path}")
+                    subprocess.run(["open", "-a", "Google Chrome", pdf_file_path], check=True)
+                
+                else:
+                    raise OSError("Unsupported platform for browser-based preview.")
+            
+            except FileNotFoundError as fnf_error:
+                print(f"Error: {fnf_error}")
+                messagebox.showinfo(
+                    "PDF Generated",
+                    f"The invoice has been saved to:\n{pdf_file_path}\n"
+                    f"However, it could not be opened in Chrome/Edge automatically. Please open it manually."
+                )
+            except subprocess.CalledProcessError as e:
+                print(f"Error running the browser subprocess: {e}")
+                messagebox.showinfo(
+                    "PDF Generated",
+                    f"The invoice has been saved to:\n{pdf_file_path}\n"
+                    f"However, it could not be opened automatically.\nError: {e.stderr}"
+                )
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                messagebox.showinfo(
+                    "PDF Generated",
+                    f"The invoice has been saved to:\n{pdf_file_path}\n"
+                    f"Please open it manually in your preferred browser."
+                )
 
         # Create a canvas for PDF
         c = canvas.Canvas(pdf_file_path, pagesize=A4)
-        c.setPageCompression(1)  
+        c.setPageCompression(1)
         width, height = A4
 
         # data to be displayed in the invoice
@@ -832,7 +921,6 @@ class InvoiceView(tk.Toplevel):
         def draw_invoice_content(c, start_y):
             """Draw a single copy of the invoice starting from the given y-coordinate."""
             # Company Logo
-            logo_path = "moonal_blackwhite.png"
             logo_width = 145
             logo_height = 20
             logo_x = 20  # Small margin from the left edge
@@ -930,7 +1018,7 @@ class InvoiceView(tk.Toplevel):
             total_in_words = self.total_in_words(total)
 
             due_amount = total - paid_amount
-            x_positions=370
+            x_positions = 370
 
             c.drawString(x_positions, y_position, "Subtotal:")
             c.drawRightString(550, y_position, f"Rs.{subtotal:.2f}")
@@ -994,20 +1082,12 @@ class InvoiceView(tk.Toplevel):
             "Print Invoice", "Invoice with two copies has been generated.", parent=self)
 
         # Platform-specific preview and print
-        current_platform = platform.system()
-        try:
-            if current_platform == "Windows":
-                os.startfile(pdf_file_path)
-            elif current_platform == "Linux":
-                subprocess.run(["xdg-open", pdf_file_path])
-            elif current_platform == "Darwin":
-                subprocess.run(["open", pdf_file_path])
-        except Exception as e:
-            messagebox.showerror(
-                "Error", f"Could not open the PDF for preview. {str(e)}")
+        preview_pdf_with_browser(pdf_file_path)
 
         user_response = messagebox.askyesno(
             "Print Invoice", "Would you like to print the invoice?")
+
+        current_platform = platform.system()
         if user_response:
             try:
                 if current_platform == "Windows":
