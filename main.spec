@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('JetBrainsMono-Bold.ttf', '.'), ('moonal_blackwhite.png', '.'), ('db/moonal_udhyog.db', 'db')],
+    datas=[('db', 'db'), ('JetBrainsMono-Bold.ttf', '.'), ('moonal_blackwhite.png', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
