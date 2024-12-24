@@ -5,7 +5,6 @@ from views.dashboard_view import DashboardView
 from views.change_credentials_view import ChangeCredentialsView
 from views.forgot_password_view import ForgotPasswordView
 
-
 class LoginView(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -16,12 +15,12 @@ class LoginView(tk.Tk):
         screen_height = self.winfo_screenheight()
         self.geometry(f"{screen_width}x{screen_height}")
 
-        self.configure(bg="#003366")  # Dark blue background
+        self.configure(bg="#E8B74D")  # Warm golden background
 
         self.is_default_user = AuthController.is_default_user()
 
         # Frame for Login Content
-        login_frame = tk.Frame(self, bg="#f0f0f5", relief="raised", bd=2)
+        login_frame = tk.Frame(self, bg="#FFF8E1", relief="raised", bd=2)  # Light complementary color
         login_frame.place(relx=0.5, rely=0.5, anchor="center", width=500, height=400)
 
         # Title
@@ -29,20 +28,20 @@ class LoginView(tk.Tk):
             login_frame,
             text="Welcome to Moonal Udhyog",
             font=("Helvetica", 16, "bold"),
-            bg="#f0f0f5",
-            fg="#003366"
+            bg="#FFF8E1",
+            fg="#2B2B2B"  # Dark gray text
         ).pack(pady=20)
 
         # Username field
         tk.Label(
-            login_frame, text="Username", font=("Arial", 12, "bold"), bg="#f0f0f5", fg="#003366"
+            login_frame, text="Username", font=("Arial", 12, "bold"), bg="#FFF8E1", fg="#2B2B2B"
         ).pack(pady=5)
         self.username_entry = tk.Entry(login_frame, font=("Arial", 12), width=30)
         self.username_entry.pack(pady=5)
 
         # Password field
         tk.Label(
-            login_frame, text="Password", font=("Arial", 12, "bold"), bg="#f0f0f5", fg="#003366"
+            login_frame, text="Password", font=("Arial", 12, "bold"), bg="#FFF8E1", fg="#2B2B2B"
         ).pack(pady=5)
         self.password_entry = tk.Entry(login_frame, font=("Arial", 12), width=30, show="*")
         self.password_entry.pack(pady=5)
@@ -52,8 +51,8 @@ class LoginView(tk.Tk):
             login_frame,
             text="Login",
             command=self.login,
-            bg="#4CAF50",
-            fg="white",
+            bg="#388E3C",  # Dark green for buttons
+            fg="white",  # White text
             font=("Arial", 12, "bold"),
             width=20,
             relief="groove",
@@ -65,8 +64,8 @@ class LoginView(tk.Tk):
             login_frame,
             text="Forgot Password?",
             command=self.open_forgot_password,
-            bg="#FF9800",
-            fg="white",
+            bg="#F57C00",  # Deep orange for "Forgot Password"
+            fg="white",  # White text
             font=("Arial", 10, "bold"),
             relief="flat"
         ).pack(pady=5)
@@ -76,9 +75,10 @@ class LoginView(tk.Tk):
             self,
             text="Moonal Udhyog PVT. LTD. © 2024",
             font=("Helvetica", 10),
-            bg="#003366",
-            fg="#f0f8ff"
+            bg="#E8B74D",  # Same as main background
+            fg="#2B2B2B"  # Dark text for footer
         ).pack(side="bottom", pady=10)
+
 
     def login(self):
         """Handle login logic."""

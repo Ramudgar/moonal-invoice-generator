@@ -12,10 +12,10 @@ class ForgotPasswordView(tk.Toplevel):
         screen_height = self.winfo_screenheight()
         self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
         
-        self.configure(bg="#003366")  # Dark blue background for a professional look
+        self.configure(bg="#E8B74D")  # Vibrant gold background
 
         # Frame for Forgot Password Content
-        forgot_frame = tk.Frame(self, bg="#f0f0f5", relief="raised", bd=2)
+        forgot_frame = tk.Frame(self, bg="#FFF8E1", relief="raised", bd=2)
         forgot_frame.place(relx=0.5, rely=0.5, anchor="center", width=400, height=500)
 
         # Title
@@ -23,8 +23,8 @@ class ForgotPasswordView(tk.Toplevel):
             forgot_frame,
             text="Forgot Password",
             font=("Helvetica", 16, "bold"),
-            bg="#f0f0f5",
-            fg="#003366"
+            bg="#FFF8E1",  # Light cream background for the frame
+            fg="#6B4226"  # Dark brown for good contrast
         ).pack(pady=10)
 
         # Username field
@@ -32,8 +32,8 @@ class ForgotPasswordView(tk.Toplevel):
             forgot_frame,
             text="Enter Username",
             font=("Arial", 12, "bold"),
-            bg="#f0f0f5",
-            fg="#003366"
+            bg="#FFF8E1",
+            fg="#6B4226"
         ).pack(pady=5)
         self.username_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30)
         self.username_entry.pack(pady=5)
@@ -43,8 +43,8 @@ class ForgotPasswordView(tk.Toplevel):
             forgot_frame,
             text="Enter PIN 1",
             font=("Arial", 12, "bold"),
-            bg="#f0f0f5",
-            fg="#003366"
+            bg="#FFF8E1",
+            fg="#6B4226"
         ).pack(pady=5)
         self.pin1_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
         self.pin1_entry.pack(pady=5)
@@ -54,8 +54,8 @@ class ForgotPasswordView(tk.Toplevel):
             forgot_frame,
             text="Enter PIN 2",
             font=("Arial", 12, "bold"),
-            bg="#f0f0f5",
-            fg="#003366"
+            bg="#FFF8E1",
+            fg="#6B4226"
         ).pack(pady=5)
         self.pin2_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
         self.pin2_entry.pack(pady=5)
@@ -65,8 +65,8 @@ class ForgotPasswordView(tk.Toplevel):
             forgot_frame,
             text="Enter New Password",
             font=("Arial", 12, "bold"),
-            bg="#f0f0f5",
-            fg="#003366"
+            bg="#FFF8E1",
+            fg="#6B4226"
         ).pack(pady=5)
         self.new_password_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
         self.new_password_entry.pack(pady=5)
@@ -76,8 +76,8 @@ class ForgotPasswordView(tk.Toplevel):
             forgot_frame,
             text="Confirm New Password",
             font=("Arial", 12, "bold"),
-            bg="#f0f0f5",
-            fg="#003366"
+            bg="#FFF8E1",
+            fg="#6B4226"
         ).pack(pady=5)
         self.confirm_password_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
         self.confirm_password_entry.pack(pady=5)
@@ -87,8 +87,8 @@ class ForgotPasswordView(tk.Toplevel):
             forgot_frame,
             text="Reset Password",
             command=self.reset_password,
-            bg="#4CAF50",
-            fg="white",
+            bg="#6B4226",  # Dark brown background for the button
+            fg="white",  # White text for better contrast
             font=("Arial", 12, "bold"),
             width=20,
             relief="groove",
@@ -100,8 +100,8 @@ class ForgotPasswordView(tk.Toplevel):
             self,
             text="Moonal Udhyog PVT. LTD. © 2024 | All Rights Reserved",
             font=("Helvetica", 10),
-            bg="#003366",
-            fg="#f0f8ff"
+            bg="#E8B74D",  # Matches the main background
+            fg="#4B3E2F"  # Slightly darker brown for footer text
         ).pack(side="bottom", pady=10)
 
     def reset_password(self):

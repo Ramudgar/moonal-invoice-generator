@@ -13,31 +13,31 @@ class InvoiceManagementView(tk.Toplevel):
         screen_height = self.winfo_screenheight()
         self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
         
-        self.configure(bg="#f0f0f5")  # Light background
+        self.configure(bg="#E8B74D")  # Main background color
 
         # Heading
         heading_label = tk.Label(
             self,
             text="Invoice Management",
-            font=("Arial", 16, "bold"),
-            bg="#003366",
-            fg="#ffffff",
-            padx=10,
-            pady=10,
+            font=("Arial", 18, "bold"),
+            bg="#FFDAB9",
+            fg="#333333",
+            padx=20,
+            pady=15,
             relief="ridge"
         )
-        heading_label.pack(fill="x", pady=(0, 20))
+        heading_label.pack(fill="x", pady=(10, 20))
 
         # Main frame for table and buttons
-        main_frame = tk.Frame(self, bg="#ffffff", relief="groove", bd=2)
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        main_frame = tk.Frame(self, bg="#FFF8E1", relief="groove", bd=2)  # Button frame color for a clean look
+        main_frame.pack(fill="both", expand=True, padx=30, pady=30)
 
         # Invoice Table Label
         tk.Label(
             main_frame,
             text="List of Invoices",
             font=("Arial", 14, "bold"),
-            bg="#ffffff",
+            bg="#FFF8E1",  # Same color as the main frame
             fg="#003366"
         ).pack(pady=(10, 10))
 
@@ -74,24 +74,40 @@ class InvoiceManagementView(tk.Toplevel):
         self.invoice_table.configure(yscrollcommand=scrollbar_y.set)
 
         # Action Buttons Frame
-        action_frame = tk.Frame(main_frame, bg="#f0f0f5")
+        action_frame = tk.Frame(main_frame, bg="#FFF8E1")  # Button frame color for a clean look
         action_frame.pack(fill="x", pady=10)
 
         view_button = tk.Button(
             action_frame,
             text="View Invoice",
             command=self.view_invoice,
-            bg="#2196F3",
-            fg="white",
+            bg="#6B4226",  # Dark brown background
+            fg="white",  # White text for readability
             font=("Arial", 12, "bold"),
-            width=15
+            width=15,
+            relief="raised",
+            bd=3
         )
-        view_button.pack(side="left", padx=10, pady=10)
+        # Hover effect for button
+        view_button.bind("<Enter>", lambda e: view_button.config(bg="#4B3E2F"))
+        view_button.bind("<Leave>", lambda e: view_button.config(bg="#6B4226"))
 
-         
+        view_button.pack(side="left", padx=15, pady=15)
 
         # Load invoices
         self.load_invoices()
+
+        # Footer
+        footer_frame = tk.Frame(self, bg="#E8B74D", pady=10)
+        footer_frame.pack(fill="x", side="bottom")
+        footer_label = tk.Label(
+            footer_frame,
+            text="Invoice Management System | All Rights Reserved",
+            font=("Arial", 10, "italic"),
+            bg="#E8B74D",
+            fg="#4B3E2F"  # Darker brown for footer text
+        )
+        footer_label.pack()
 
     def load_invoices(self):
         """Load invoices into the table."""
@@ -111,8 +127,6 @@ class InvoiceManagementView(tk.Toplevel):
                     f"Rs.{invoice['total_amount']:.2f}"
                 )
             )
-
-    
 
     def view_invoice(self):
         """Open the Invoice View with the selected invoice ID."""
@@ -155,5 +169,3 @@ class InvoiceManagementView(tk.Toplevel):
         else:
             messagebox.showwarning(
                 "No Selection", "Please select an invoice to view.", parent=self)
-
-     

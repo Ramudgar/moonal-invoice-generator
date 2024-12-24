@@ -6,60 +6,65 @@ from controllers.product_controller import ProductController
 class ProductView(tk.Toplevel):
     def __init__(self, master=None):
         super().__init__(master)
-        self.title("Product Management")
+        self.title("Product Management Dashboard")
+        
         # Manually maximize the window (cross-platform compatible)
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
         
-        self.configure(bg="#f0f8ff")  # Light blue background for consistency
+        self.configure(bg="#F1C27D")  # Soft and appealing background
 
-        # Title Label
+        # Title Label with improved appearance
         title_label = tk.Label(
             self,
-            text="Product Management",
-            font=("Helvetica", 16, "bold"),
-            bg="#f0f8ff",
-            fg="#003366"  # Dark blue for contrast
+           text="Product Management",
+            font=("Arial", 18, "bold"),
+            bg="#FFDAB9",
+            fg="#333333",
+            padx=20,
+            pady=15,
+            relief="ridge"
         )
-        title_label.pack(pady=20)
-
+        title_label.pack(fill="x", pady=(10, 20))
+        
         # Form Frame
-        form_frame = tk.Frame(self, bg="#d6eaf8", relief="solid", bd=1)
-        form_frame.pack(padx=20, pady=20, fill="x", expand=True)
+        form_frame = tk.Frame(self, bg="#FFF8E1", relief="solid", bd=1)
+        form_frame.pack(padx=30, pady=20, fill="x", expand=True)
 
-        tk.Label(form_frame, text="Product Name:", bg="#d6eaf8", font=("Helvetica", 12)).grid(
-            row=0, column=0, padx=10, pady=10, sticky="w"
+        tk.Label(form_frame, text="Product Name:", bg="#FFF8E1", font=("Helvetica", 12)).grid(
+            row=0, column=0, padx=15, pady=10, sticky="w"
         )
         self.product_name_entry = tk.Entry(form_frame, font=("Helvetica", 12), width=30)
         self.product_name_entry.grid(row=0, column=1, pady=10)
 
-        tk.Label(form_frame, text="Product Price:", bg="#d6eaf8", font=("Helvetica", 12)).grid(
-            row=1, column=0, padx=10, pady=10, sticky="w"
+        tk.Label(form_frame, text="Product Price:", bg="#FFF8E1", font=("Helvetica", 12)).grid(
+            row=1, column=0, padx=15, pady=10, sticky="w"
         )
         self.product_price_entry = tk.Entry(form_frame, font=("Helvetica", 12), width=30)
         self.product_price_entry.grid(row=1, column=1, pady=10)
 
-        tk.Label(form_frame, text="HS Code:", bg="#d6eaf8", font=("Helvetica", 12)).grid(
-            row=2, column=0, padx=10, pady=10, sticky="w"
+        tk.Label(form_frame, text="HS Code:", bg="#FFF8E1", font=("Helvetica", 12)).grid(
+            row=2, column=0, padx=15, pady=10, sticky="w"
         )
         self.hs_code_entry = tk.Entry(form_frame, font=("Helvetica", 12), width=30)
         self.hs_code_entry.grid(row=2, column=1, pady=10)
 
-        # Button Frame
-        button_frame = tk.Frame(self, bg="#f0f8ff")
-        button_frame.pack(pady=20)
+        # Button Frame with no large gap
+        button_frame = tk.Frame(self, bg="#FFF8E1")
+        button_frame.pack(pady=15)
 
         style = ttk.Style()
         style.configure(
             "Product.TButton",
             font=("Helvetica", 12, "bold"),
             padding=10,
-            width=15,
-            foreground="#ffffff",
-            background="#0059b3",
+            width=18,
+            foreground="#FFFFFF",
+            background="#6B4226",  # Vibrant brown for buttons
+            relief="solid",
         )
-        style.map("Product.TButton", background=[("active", "#004080")])
+        style.map("Product.TButton", background=[("active", "#FF6F00")])  # Darker orange on hover
 
         ttk.Button(
             button_frame, text="Add Product", style="Product.TButton", command=self.add_product
@@ -73,7 +78,7 @@ class ProductView(tk.Toplevel):
             button_frame, text="Delete Product", style="Product.TButton", command=self.delete_product
         ).grid(row=0, column=2, padx=15)
 
-        # Product List
+        # Product List with visual improvement
         self.product_list = ttk.Treeview(
             self,
             columns=("ID", "Name", "Price", "HS Code"),
@@ -88,7 +93,7 @@ class ProductView(tk.Toplevel):
         self.product_list.column("Name", width=200, anchor="w")
         self.product_list.column("Price", width=100, anchor="center")
         self.product_list.column("HS Code", width=150, anchor="center")
-        self.product_list.pack(pady=20, padx=20, fill="both", expand=True)
+        self.product_list.pack(pady=20, padx=30, fill="both", expand=True)
 
         self.product_list.bind("<Double-1>", self.load_product_data)
 
