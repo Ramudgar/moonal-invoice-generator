@@ -34,7 +34,7 @@ class DashboardView(tk.Tk):
 
         title_label = tk.Label(
             title_frame,
-            text="🌟 Manage Your Invoices 🌟",
+            text=" Manage Your Invoices ",
             font=("Helvetica", 24, "bold"),
             bg="#E8B74D",  # Matches the main background
             fg="#4B3E2F",  # Dark brown for readability
@@ -76,28 +76,28 @@ class DashboardView(tk.Tk):
         # Buttons for navigation
         ttk.Button(
             button_frame,
-            text="🛒 Manage Products",
+            text=" Manage Products",
             style="Dashboard.TButton",
             command=self.open_product_view
         ).grid(row=0, column=0, padx=20, pady=15)
 
         ttk.Button(
             button_frame,
-            text="📄 Generate New Invoice",
+            text=" Generate New Invoice",
             style="Dashboard.TButton",
             command=self.open_invoice_view
         ).grid(row=1, column=0, padx=20, pady=15)
 
         ttk.Button(
             button_frame,
-            text="📂 View Past Invoices",
+            text=" View Past Invoices",
             style="Dashboard.TButton",
             command=self.view_invoices
         ).grid(row=2, column=0, padx=20, pady=15)
 
         ttk.Button(
             button_frame,
-            text="🔒 Change Password",
+            text=" Change Password",
             style="Dashboard.TButton",
             command=self.change_password
         ).grid(row=3, column=0, padx=20, pady=15)

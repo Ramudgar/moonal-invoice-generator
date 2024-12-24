@@ -70,7 +70,7 @@ class ChangeCredentialsView(tk.Toplevel):
         # Footer Label
         tk.Label(
             self,
-            text="Moonal Udhyog PVT. LTD. © 2024 | All Rights Reserved",
+            text="Moonal Udhyog PVT. LTD. 2024 | All Rights Reserved",
             font=("Helvetica", 12),
             bg="#E8B74D",  # Matches the main background
             fg="#4B3E2F"  # Darker brown for footer text
