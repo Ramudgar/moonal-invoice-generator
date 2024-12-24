@@ -34,13 +34,14 @@ class InvoiceView(tk.Toplevel):
         self.main_frame = tk.Frame(self)
         self.main_frame.pack(fill="both", expand=True)
 
-        self.configure(bg="#003366")
+        self.configure(bg="#F1C27D")
         self.invoice_id = invoice_id
         self.invoice_items = []  # Holds the items added to the invoice
 
-      # Left frame for invoice form, right frame for invoice preview
-        self.left_frame = tk.Frame(self.main_frame, bg="#003366")
-        self.left_frame.grid(row=0, column=0, sticky="nsew", padx=int(10 * self.zoom_factor), pady=int(10 * self.zoom_factor))
+        # Left frame for invoice form, right frame for invoice preview
+        self.left_frame = tk.Frame(self, bg="white")
+        self.left_frame.pack(side="left", fill="both",
+                             expand=True, padx=20, pady=20)
 
         self.right_frame = tk.Frame(self.main_frame, bg="white", relief="groove", borderwidth=2)
         self.right_frame.grid(row=0, column=1, sticky="nsew", padx=int(10 * self.zoom_factor), pady=int(10 * self.zoom_factor))
@@ -48,7 +49,7 @@ class InvoiceView(tk.Toplevel):
           # Configure grid expansion
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=2)  # Make the right preview area wider
+        self.main_frame.grid_columnconfigure(1, weight=1)  # Make the right preview area wider
 
         # Load image after initializing root window
         logo_path = os.path.abspath("moonal_blackwhite.png")
@@ -92,10 +93,12 @@ class InvoiceView(tk.Toplevel):
 
         # Convert rupees and paisa to words
         rupees_in_words = num2words.num2words(rupees, lang='en_IN').title()
+
         if paisa > 0:
-            paisa_in_words = f"{num2words.num2words(
-                paisa, lang='en_IN').title()} Paisa"
+            # Convert paisa to words and append "Paisa"
+            paisa_in_words = f"{num2words.num2words(paisa, lang='en_IN').title()} Paisa"
         else:
+            # No paisa, leave it as an empty string
             paisa_in_words = ""
 
         # Combine into a single grammatically correct string
@@ -116,15 +119,14 @@ class InvoiceView(tk.Toplevel):
         tk.Label(
             main_frame,
             text="Enter Client Details",
-            bg="#003366",
-            fg="#ffffff",
-            font=("Arial", int(14 * self.zoom_factor), "bold"),
-            padx=int(10 * self.zoom_factor),
-            pady=int(5 * self.zoom_factor),
+            bg="#FFDAB9",
+            fg="#333333",
+            font=("Arial", 14, "bold"),
+            padx=10,
+            pady=6,
             relief="ridge"
         ).grid(row=0, column=0, columnspan=4, sticky="ew", pady=(int(5 * self.zoom_factor), int(15 * self.zoom_factor)))
 
-        # Client Details Section
        # Client Details Section
         tk.Label(main_frame, text="Client Name", bg="#f0f0f5", font=("Arial", int(12 * self.zoom_factor))).grid(row=1, column=0, padx=int(5 * self.zoom_factor), pady=int(5 * self.zoom_factor), sticky="w")
         self.client_name_entry = tk.Entry(main_frame, width=int(30 * self.zoom_factor), font=("Arial", int(12 * self.zoom_factor)))
@@ -143,8 +145,8 @@ class InvoiceView(tk.Toplevel):
         self.pan_no_entry.grid(row=2, column=3, padx=int(5 * self.zoom_factor), pady=int(5 * self.zoom_factor))
 
         # Product Selection Section
-        tk.Label(main_frame, text="Select Product", bg="#f0f0f5", font=("Arial", 12)).grid(
-            row=3, column=0, padx=10, pady=10, sticky="w"
+        tk.Label(main_frame, text="Select Product", bg="#f0f0f5", font=("Arial", 10)).grid(
+            row=3, column=0, padx=10, pady=6, sticky="w"
         )
         self.product_list = ProductController.get_all_products()
         self.product_dropdown = ttk.Combobox(
@@ -153,49 +155,49 @@ class InvoiceView(tk.Toplevel):
             font=("Arial", 12),
             width=28
         )
-        self.product_dropdown.grid(row=3, column=1, padx=10, pady=10)
+        self.product_dropdown.grid(row=3, column=1, padx=10, pady=6)
 
-        tk.Label(main_frame, text="Quantity", bg="#f0f0f5", font=("Arial", 12)).grid(
+        tk.Label(main_frame, text="Quantity", bg="#f0f0f5", font=("Arial", 10)).grid(
             row=3, column=2, padx=10, pady=10, sticky="w"
         )
         self.quantity_entry = tk.Entry(
-            main_frame, width=30, font=("Arial", 12))
+            main_frame, width=30, font=("Arial", 10))
         self.quantity_entry.grid(row=3, column=3, padx=10, pady=10)
 
         tk.Button(
             main_frame,
             text="Add Product",
             command=self.add_product,
-            bg="#4CAF50",
+            bg="#6B4226",
             fg="white",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 10, "bold"),
             width=20
-        ).grid(row=4, column=3, padx=10, pady=10, sticky="e")
+        ).grid(row=4, column=3, padx=10, pady=6, sticky="e")
 
         # VAT and Discount Section
-        tk.Label(main_frame, text="VAT Rate (%)", bg="#f0f0f5", font=("Arial", 12)).grid(
-            row=5, column=0, padx=10, pady=10, sticky="w"
+        tk.Label(main_frame, text="VAT Rate (%)", bg="#f0f0f5", font=("Arial", 10)).grid(
+            row=5, column=0, padx=10, pady=6, sticky="w"
         )
         self.vat_rate_entry = tk.Entry(
-            main_frame, width=30, font=("Arial", 12))
+            main_frame, width=30, font=("Arial", 10))
         self.vat_rate_entry.insert(0, "13")  # Default VAT
-        self.vat_rate_entry.grid(row=5, column=1, padx=10, pady=10)
+        self.vat_rate_entry.grid(row=5, column=1, padx=10, pady=6)
 
-        tk.Label(main_frame, text="Discount (%)", bg="#f0f0f5", font=("Arial", 12)).grid(
-            row=5, column=2, padx=10, pady=10, sticky="w"
+        tk.Label(main_frame, text="Discount (%)", bg="#f0f0f5", font=("Arial", 10)).grid(
+            row=5, column=2, padx=10, pady=6, sticky="w"
         )
         self.discount_entry = tk.Entry(
-            main_frame, width=30, font=("Arial", 12))
+            main_frame, width=30, font=("Arial", 10))
         self.discount_entry.insert(0, "0")  # Default discount
-        self.discount_entry.grid(row=5, column=3, padx=10, pady=10)
+        self.discount_entry.grid(row=5, column=3, padx=10, pady=6)
 
         # Added Products Section
         tk.Label(
             main_frame,
             text="Added Products",
-            bg="#003366",
-            fg="#ffffff",
-            font=("Arial", 14, "bold"),
+            bg="#FFDAB9",
+            fg="#333333",
+            font=("Arial", 12, "bold"),
             padx=10,
             pady=10
         ).grid(row=6, column=0, columnspan=4, pady=(20, 10), sticky="ew")
@@ -231,19 +233,19 @@ class InvoiceView(tk.Toplevel):
             command=self.remove_selected_product,
             bg="#F44336",
             fg="white",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 10, "bold"),
             width=20
-        ).grid(row=0, column=0, padx=10, pady=10)
+        ).grid(row=0, column=0, padx=10, pady=6)
 
         tk.Button(
             self.button_frame,
             text="Generate Invoice Preview",
             command=self.generate_invoice_preview,
-            bg="#2196F3",
+            bg="#6B4226",
             fg="white",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 10, "bold"),
             width=25
-        ).grid(row=0, column=1, padx=10, pady=10)
+        ).grid(row=0, column=1, padx=10, pady=6)
 
     def add_product(self):
         """Add a selected product to the Treeview."""
@@ -254,8 +256,7 @@ class InvoiceView(tk.Toplevel):
             messagebox.showerror("Error", "Quantity must be a valid number.")
             return
 
-        selected_product = next((p for p in self.product_list if f"{
-                                p[1]} - {p[3]}" == product_name), None)
+        selected_product = next((p for p in self.product_list if f"{p[1]} - {p[3]}" == product_name), None)
         if selected_product:
             product_id, name, price_per_unit, hs_code = selected_product
             total_price = float(price_per_unit) * int(quantity)
@@ -433,10 +434,8 @@ class InvoiceView(tk.Toplevel):
         # Summary Labels
         tk.Label(summary_frame, text=f"Subtotal: Rs.{subtotal:.2f}", font=(
             "Arial", 10), bg="white").pack(anchor="e")
-        tk.Label(summary_frame, text=f"Discount ({
-                 discount}%): -Rs.{discount_amount:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
-        tk.Label(summary_frame, text=f"VAT ({vat_rate}%): Rs.{
-                 vat:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"Discount ({discount}%): -Rs.{discount_amount:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
+        tk.Label(summary_frame, text=f"VAT ({vat_rate}%): Rs.{vat:.2f}", font=("Arial", 10), bg="white").pack(anchor="e")
         tk.Label(summary_frame, text=f"Total: Rs.{total:.2f}", font=(
             "Arial", 12, "bold"), bg="white").pack(anchor="e", pady=(5, 0))
         tk.Label(summary_frame, text=f"Total in Words: {total_in_words}", font=(
@@ -465,7 +464,7 @@ class InvoiceView(tk.Toplevel):
             self.button_frame,
             text="Finalize Invoice",
             command=lambda: self.finalize_invoice(total_amount),
-            bg="#4CAF50",
+            bg="#6B4226",
             fg="white",
             font=("Arial", 12, "bold"),
             width=20
@@ -494,8 +493,7 @@ class InvoiceView(tk.Toplevel):
             invoice_id = InvoiceController.create_invoice(
                 self.invoice_number, client_name, client_contact, address, pan_no, self.invoice_items, vat_rate, discount, paid_amount
             )
-            messagebox.showinfo("Success", f"Invoice {
-                                invoice_id} created successfully with due amount Rs.{due_amount:.2f}.", parent=self)
+            messagebox.showinfo("Success", f"Invoice {invoice_id} created successfully with due amount Rs.{due_amount:.2f}.", parent=self)
             self.show_final_invoice_view(invoice_id, client_name, client_contact,
                                          address, pan_no, vat_rate, discount, paid_amount, due_amount)
         except ValueError as e:
@@ -662,7 +660,8 @@ class InvoiceView(tk.Toplevel):
         tk.Label(date_vat_frame, text="VAT: 609764022", font=("Arial", 9), bg="white").pack(anchor="e")
 
         # Date
-        tk.Label(date_vat_frame, text=f"Date: {datetime.now().strftime('%Y-%m-%d')}", font=("Arial", 9), bg="white").pack(anchor="e")
+        tk.Label(date_vat_frame, text=f"Date: {datetime.now().strftime('%Y-%m-%d')}", font=("Arial", 10), bg="white").pack(anchor="e")
+
 
         # Adjust Column Weights for Proper Spacing
         header_frame.grid_columnconfigure(0, weight=1)  # Left (Logo)
@@ -803,32 +802,40 @@ class InvoiceView(tk.Toplevel):
             """
             Open the PDF in Google Chrome or Microsoft Edge based on the platform.
             """
-            current_platform = platform.system()  # Get the current platform (e.g., Windows, Linux, Darwin)
+            current_platform = platform.system(
+            )  # Get the current platform (e.g., Windows, Linux, Darwin)
             try:
                 if current_platform == "Windows":  # Windows-specific
                     print(f"Attempting to open PDF with Microsoft Edge on Windows: {pdf_file_path}")
-                    edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"  # Default Edge path
-                    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"  # Default Chrome path
-                    
+                    # Default Edge path
+                    edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+                    # Default Chrome path
+                    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+
                     if os.path.exists(edge_path):
                         subprocess.run([edge_path, pdf_file_path], check=True)
                     elif os.path.exists(chrome_path):
-                        subprocess.run([chrome_path, pdf_file_path], check=True)
+                        subprocess.run(
+                            [chrome_path, pdf_file_path], check=True)
                     else:
-                        raise FileNotFoundError("Neither Chrome nor Edge is installed in the default locations.")
-                
+                        raise FileNotFoundError(
+                            "Neither Chrome nor Edge is installed in the default locations.")
+
                 elif current_platform == "Linux":  # Linux-specific
                     print(f"Attempting to open PDF with Google Chrome on Linux: {pdf_file_path}")
                     # Try Chrome first, fallback to chromium-browser
-                    subprocess.run(["google-chrome", pdf_file_path], check=True)
-                
+                    subprocess.run(
+                        ["google-chrome", pdf_file_path], check=True)
+
                 elif current_platform == "Darwin":  # macOS-specific
                     print(f"Attempting to open PDF with Google Chrome on macOS: {pdf_file_path}")
-                    subprocess.run(["open", "-a", "Google Chrome", pdf_file_path], check=True)
-                
+                    subprocess.run(
+                        ["open", "-a", "Google Chrome", pdf_file_path], check=True)
+
                 else:
-                    raise OSError("Unsupported platform for browser-based preview.")
-            
+                    raise OSError(
+                        "Unsupported platform for browser-based preview.")
+
             except FileNotFoundError as fnf_error:
                 print(f"Error: {fnf_error}")
                 messagebox.showinfo(
@@ -863,7 +870,15 @@ class InvoiceView(tk.Toplevel):
         address = address or self.address_entry.get()
         pan_no = pan_no or self.pan_no_entry.get()
         vat_rate = vat_rate or float(self.vat_rate_entry.get())
-        discount = discount or float(self.discount_entry.get())
+        # Ensure discount value is handled properly
+        try:
+            # If discount_entry exists, use its value; otherwise, use the passed-in argument or default to 0
+            discount = discount or float(self.discount_entry.get()) if hasattr(self, 'discount_entry') else 0.0
+        except AttributeError:
+            discount = 0.0  # Fallback if discount_entry does not exist
+        except ValueError:
+            messagebox.showerror("Error", "Invalid discount value.")
+            return
         paid_amount = paid_amount or float(self.paid_amount_entry.get())
         subtotal = subtotal or sum(item["total_price"]
                                    for item in self.invoice_items)
@@ -896,8 +911,7 @@ class InvoiceView(tk.Toplevel):
                                 "Golbazar-4, Siraha, Madhesh Pradesh, Nepal")
 
             c.setFont("Courier", 11)
-            c.drawString(450, start_y, f"Date: {
-                         date}")
+            c.drawString(450, start_y, f"Date: {date}")
 
             customer_info_y = start_y-70
             # Add the invoice title at the center
@@ -946,10 +960,8 @@ class InvoiceView(tk.Toplevel):
                 c.drawString(x_positions[1], y_position, item["hs_code"])
                 c.drawString(x_positions[2], y_position, item["product_name"])
                 c.drawString(x_positions[3], y_position, str(item["quantity"]))
-                c.drawString(x_positions[4], y_position, f"Rs.{
-                             item['price_per_unit']:.2f}")
-                c.drawString(x_positions[5], y_position, f"Rs.{
-                             item['total_price']:.2f}")
+                c.drawString(x_positions[4], y_position, f"Rs.{item['price_per_unit']:.2f}")
+                c.drawString(x_positions[5], y_position, f"Rs.{item['total_price']:.2f}")
 
             # Draw a dotted line before the summary section
             y_position -= 10
@@ -974,8 +986,7 @@ class InvoiceView(tk.Toplevel):
             c.drawString(x_positions, y_position, "Subtotal:")
             c.drawRightString(550, y_position, f"Rs.{subtotal:.2f}")
             y_position -= 15
-            c.drawString(x_positions, y_position, f"Discount ({
-                         discount}%):")
+            c.drawString(x_positions, y_position, f"Discount ({ discount}%):")
             c.drawRightString(550, y_position, f"Rs.{discount_amount:.2f}")
             y_position -= 15
             c.drawString(x_positions, y_position,
@@ -1008,8 +1019,7 @@ class InvoiceView(tk.Toplevel):
                     c.drawString(40, y_position, line)
                     y_position -= 15
             else:
-                c.drawString(40, y_position, f"Total in Words: {
-                             total_in_words}")
+                c.drawString(40, y_position, f"Total in Words: {total_in_words}")
 
             # Signature Section
             y_position -= 30
@@ -1043,8 +1053,10 @@ class InvoiceView(tk.Toplevel):
             try:
                 if current_platform == "Windows":
                     os.startfile(pdf_file_path, "print")
-                elif current_platform in ["Linux", "Darwin"]:
-                    subprocess.run(["lp", pdf_file_path])
+                elif current_platform == "Linux":
+                    subprocess.run(["lp", pdf_file_path], check=True)
+                elif current_platform == "Darwin":
+                    subprocess.run(["lpr", pdf_file_path], check=True)
             except Exception as e:
                 messagebox.showerror(
                     "Error", f"Could not print the PDF. {str(e)}")
