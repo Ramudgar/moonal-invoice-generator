@@ -30,7 +30,7 @@ class InvoiceView(tk.Toplevel):
         # Scaling factor (70%)
         self.zoom_factor = 0.7
 
-        # Main Frame to hold left form and right preview sections
+        # # Main Frame to hold left form and right preview sections
         self.main_frame = tk.Frame(self)
         self.main_frame.pack(fill="both", expand=True)
 
@@ -38,14 +38,25 @@ class InvoiceView(tk.Toplevel):
         self.invoice_id = invoice_id
         self.invoice_items = []  # Holds the items added to the invoice
 
-        # Left frame for invoice form, right frame for invoice preview
-        self.left_frame = tk.Frame(self, bg="white")
-        self.left_frame.pack(side="left", fill="both",
-                             expand=True, padx=20, pady=20)
+        # # Left frame for invoice form, right frame for invoice preview
+        # self.left_frame = tk.Frame(self, bg="white")
+        # self.left_frame.pack(side="left", fill="both",
+        #                      expand=True, padx=20, pady=20)
 
-        self.right_frame = tk.Frame(self.main_frame, bg="white", relief="groove", borderwidth=2)
-        self.right_frame.grid(row=0, column=1, sticky="nsew", padx=int(10 * self.zoom_factor), pady=int(10 * self.zoom_factor))
+        # self.right_frame = tk.Frame(self.main_frame, bg="white", relief="groove", borderwidth=2)
+        # self.right_frame.grid(row=0, column=1, sticky="nsew", padx=int(10 * self.zoom_factor), pady=int(10 * self.zoom_factor))
+        # Configure Grid Layout for Main Frame
+        self.main_frame.grid_rowconfigure(0, weight=1)  # Allow vertical resizing
+        self.main_frame.grid_columnconfigure(0, weight=1)  # Left Frame (Form)
+        self.main_frame.grid_columnconfigure(1, weight=1)  # Right Frame (Preview)
 
+        # Left Frame for Form
+        self.left_frame = tk.Frame(self.main_frame, bg="lightgrey", width=700)
+        self.left_frame.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
+
+        # Right Frame for Invoice Preview
+        self.right_frame = tk.Frame(self.main_frame, bg="white", width=500)
+        self.right_frame.grid(row=0, column=1, sticky="nswe", padx=10, pady=10)
           # Configure grid expansion
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
@@ -323,11 +334,11 @@ class InvoiceView(tk.Toplevel):
     def show_invoice_preview(self, client_name, client_contact, address, pan_no, vat_rate, discount):
         """Display invoice details including VAT and discount, but without paid amount."""
 
-        # Clear the right frame
+        # # Clear the right frame
         for widget in self.right_frame.winfo_children():
             widget.destroy()
 
-        # Invoice Title
+        # # Invoice Title
         tk.Label(self.right_frame, text="INVOICE", font=(
             "Arial", 18, "bold"), bg="white").pack(anchor="n")
 
