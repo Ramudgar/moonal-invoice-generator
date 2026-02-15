@@ -1,108 +1,66 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from controllers.authController import AuthController
 
-
-class ChangeCredentialsView(tk.Toplevel):
-    def __init__(self, master=None, is_default_user=False):
-        super().__init__(master)
+class ChangeCredentialsView(tk.Frame):
+    def __init__(self, parent, controller, is_default_user=False):
+        super().__init__(parent)
+        self.controller = controller
         self.is_default_user = is_default_user
-        self.title("Change Credentials")
-        self.geometry("900x600")
-        self.configure(bg="#E8B74D")  # Golden hue for the main background
+        self.COLORS = controller.COLORS
+        self.configure(bg=self.COLORS["bg"])
 
-        # Title Label
-        tk.Label(
-            self,
-            text="Change Your Credentials",
-            font=("Helvetica", 24, "bold"),
-            bg="#E8B74D",  # Matches the main background
-            fg="#6B4226"  # Dark brown for readability
-        ).pack(pady=30)
+        # Header
+        header = tk.Frame(self, bg=self.COLORS["primary"], padx=20, pady=10)
+        header.pack(fill="x")
+        
+        # If default user, they MUST change credentials, so maybe hide back if they aren't done?
+        # But user said back/forth button.
+        ttk.Button(header, text="← BACK", command=self.controller.show_dashboard if not is_default_user else self.controller.show_login).pack(side="left")
+        
+        tk.Label(header, text="ACCOUNT SECURITY", font=("Segoe UI", 16, "bold"), bg=self.COLORS["primary"], fg="white").pack(side="left", padx=20)
 
-        # Form Frame
-        form_frame = tk.Frame(self, bg="#FFF8E1", relief="raised", bd=2)  # Light cream frame
-        form_frame.place(relx=0.5, rely=0.5, anchor="center", width=700, height=400)
+        # Form Card
+        card = tk.Frame(self, bg="white", padx=40, pady=40, highlightbackground="#E0E0E0", highlightthickness=1)
+        card.place(relx=0.5, rely=0.5, anchor="center", width=500, height=500)
 
         # Form Fields
-        labels = [
-            "Current Username:",
-            "Current Password:",
-            "New Username:",
-            "New Password:"
-        ]
-        entries = []
-        for i, label_text in enumerate(labels):
-            tk.Label(
-                form_frame, 
-                text=label_text, 
-                font=("Helvetica", 16), 
-                bg="#FFF8E1",  # Matches the frame background
-                fg="#6B4226"  # Dark brown for labels
-            ).grid(row=i, column=0, padx=20, pady=15, sticky="e")
-            
-            entry = tk.Entry(form_frame, font=("Helvetica", 16), width=35)
-            if "Password" in label_text:
-                entry.config(show="*")  # Mask password fields
-            entry.grid(row=i, column=1, padx=20, pady=15, sticky="w")
-            entries.append(entry)
+        def create_field(label, row):
+            tk.Label(card, text=label, font=("Segoe UI", 9, "bold"), bg="white", fg=self.COLORS["secondary"]).grid(row=row*2, column=0, sticky="w", pady=(15, 0))
+            e = tk.Entry(card, font=("Segoe UI", 11), width=45, bg="#F8F9FA", highlightthickness=1, highlightbackground="#D1D1D1", relief="flat")
+            if "PASSWORD" in label: e.config(show="•")
+            e.grid(row=row*2+1, column=0, pady=(5, 10), ipady=5)
+            return e
 
-        (
-            self.current_username_entry,
-            self.current_password_entry,
-            self.new_username_entry,
-            self.new_password_entry
-        ) = entries
+        self.current_username_entry = create_field("CURRRENT USERNAME", 0)
+        self.current_password_entry = create_field("CURRENT PASSWORD", 1)
+        self.new_username_entry = create_field("NEW USERNAME", 2)
+        self.new_password_entry = create_field("NEW PASSWORD", 3)
 
         # Submit Button
-        tk.Button(
-            form_frame,
-            text="Change Credentials",
-            command=self.change_credentials,
-            font=("Helvetica", 16, "bold"),
-            bg="#6B4226",  # Dark brown for button background
-            fg="white",  # White text for contrast
-            width=25,
-            relief="groove",
-            bd=2
-        ).grid(row=len(labels), column=0, columnspan=2, pady=30)
+        style = ttk.Style()
+        style.configure("Security.TButton", font=("Segoe UI", 11, "bold"), background=self.COLORS["primary"], foreground="white")
+        
+        btn = ttk.Button(card, text="UPDATE CREDENTIALS", style="Security.TButton", command=self.change_credentials)
+        btn.grid(row=8, column=0, pady=30, sticky="ew")
 
-        # Footer Label
-        tk.Label(
-            self,
-            text="Moonal Udhyog PVT. LTD. © 2024 | All Rights Reserved",
-            font=("Helvetica", 12),
-            bg="#E8B74D",  # Matches the main background
-            fg="#4B3E2F"  # Darker brown for footer text
-        ).pack(side="bottom", pady=10)
+        # Footer
+        tk.Label(self, text="Moonal Udhyog © 2024 | Secure Administration", 
+                 font=("Segoe UI", 10), bg=self.COLORS["bg"], fg="#9E9E9E").pack(side="bottom", pady=20)
 
     def change_credentials(self):
         """Handle changing user credentials."""
-        current_username = self.current_username_entry.get()
-        current_password = self.current_password_entry.get()
-        new_username = self.new_username_entry.get()
-        new_password = self.new_password_entry.get()
+        curr_u = self.current_username_entry.get()
+        curr_p = self.current_password_entry.get()
+        new_u = self.new_username_entry.get()
+        new_p = self.new_password_entry.get()
 
         try:
-            # Attempt to change credentials
-            AuthController.change_credentials(
-                current_username, current_password, new_username, new_password
-            )
-            messagebox.showinfo(
-                "Success", "Credentials updated successfully.", parent=self
-            )
-
+            AuthController.change_credentials(curr_u, curr_p, new_u, new_p)
+            messagebox.showinfo("Success", "Credentials updated successfully.")
             if self.is_default_user:
-                self.destroy()
-                self.open_dashboard()
+                self.controller.show_dashboard()
             else:
-                self.destroy()
-
+                self.controller.show_dashboard()
         except ValueError as e:
             messagebox.showerror("Error", str(e), parent=self)
-
-    def open_dashboard(self):
-        """Open the dashboard view for the updated user."""
-        from views.dashboard_view import DashboardView
-        dashboard = DashboardView()
-        dashboard.mainloop()

@@ -1,136 +1,89 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from controllers.authController import AuthController
 
+class ForgotPasswordView(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.COLORS = controller.COLORS
+        self.configure(bg=self.COLORS["bg"])
 
-class ForgotPasswordView(tk.Toplevel):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.title("Forgot Password - Moonal Udhyog")
-        # Manually maximize the window (cross-platform compatible)
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
-        
-        self.configure(bg="#E8B74D")  # Vibrant gold background
+        # Header
+        header = tk.Frame(self, bg=self.COLORS["primary"], padx=20, pady=10)
+        header.pack(fill="x")
+        ttk.Button(header, text="← BACK", command=self.controller.show_login).pack(side="left")
+        tk.Label(header, text="RECOVER ACCESS", font=("Segoe UI", 16, "bold"), bg=self.COLORS["primary"], fg="white").pack(side="left", padx=20)
 
-        # Frame for Forgot Password Content
-        forgot_frame = tk.Frame(self, bg="#FFF8E1", relief="raised", bd=2)
-        forgot_frame.place(relx=0.5, rely=0.5, anchor="center", width=400, height=500)
+        # Content Card
+        card = tk.Frame(self, bg="white", highlightbackground="#E0E0E0", highlightthickness=1)
+        card.place(relx=0.5, rely=0.5, anchor="center", width=420, height=650)
 
         # Title
         tk.Label(
-            forgot_frame,
-            text="Forgot Password",
-            font=("Helvetica", 16, "bold"),
-            bg="#FFF8E1",  # Light cream background for the frame
-            fg="#6B4226"  # Dark brown for good contrast
-        ).pack(pady=10)
+            card,
+            text="ACCOUNT RECOVERY",
+            font=("Segoe UI", 16, "bold"),
+            bg="white",
+            fg=self.COLORS["primary"]
+        ).pack(pady=(30, 20))
 
-        # Username field
-        tk.Label(
-            forgot_frame,
-            text="Enter Username",
-            font=("Arial", 12, "bold"),
-            bg="#FFF8E1",
-            fg="#6B4226"
-        ).pack(pady=5)
-        self.username_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30)
-        self.username_entry.pack(pady=5)
+        def create_field(label, show=None):
+            tk.Label(card, text=label, font=("Segoe UI", 8, "bold"), bg="white", fg=self.COLORS["secondary"]).pack(anchor="w", padx=40)
+            e = tk.Entry(card, font=("Segoe UI", 10), width=35, bg="#F8F9FA", highlightthickness=1, highlightbackground="#D1D1D1", relief="flat")
+            if show: e.config(show=show)
+            e.pack(pady=(2, 12), ipady=5, padx=40)
+            return e
 
-        # PIN 1 field
-        tk.Label(
-            forgot_frame,
-            text="Enter PIN 1",
-            font=("Arial", 12, "bold"),
-            bg="#FFF8E1",
-            fg="#6B4226"
-        ).pack(pady=5)
-        self.pin1_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
-        self.pin1_entry.pack(pady=5)
+        self.username_entry = create_field("USERNAME")
+        self.pin1_entry = create_field("SECURITY PIN 1", "•")
+        self.pin2_entry = create_field("SECURITY PIN 2", "•")
+        self.new_password_entry = create_field("NEW PASSWORD", "•")
+        self.confirm_password_entry = create_field("CONFIRM PASSWORD", "•")
 
-        # PIN 2 field
-        tk.Label(
-            forgot_frame,
-            text="Enter PIN 2",
-            font=("Arial", 12, "bold"),
-            bg="#FFF8E1",
-            fg="#6B4226"
-        ).pack(pady=5)
-        self.pin2_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
-        self.pin2_entry.pack(pady=5)
-
-        # New Password field
-        tk.Label(
-            forgot_frame,
-            text="Enter New Password",
-            font=("Arial", 12, "bold"),
-            bg="#FFF8E1",
-            fg="#6B4226"
-        ).pack(pady=5)
-        self.new_password_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
-        self.new_password_entry.pack(pady=5)
-
-        # Confirm New Password field
-        tk.Label(
-            forgot_frame,
-            text="Confirm New Password",
-            font=("Arial", 12, "bold"),
-            bg="#FFF8E1",
-            fg="#6B4226"
-        ).pack(pady=5)
-        self.confirm_password_entry = tk.Entry(forgot_frame, font=("Arial", 12), width=30, show="*")
-        self.confirm_password_entry.pack(pady=5)
-
-        # Reset Password button
+        # Reset button
         tk.Button(
-            forgot_frame,
-            text="Reset Password",
+            card,
+            text="RESET PASSWORD",
             command=self.reset_password,
-            bg="#6B4226",  # Dark brown background for the button
-            fg="white",  # White text for better contrast
-            font=("Arial", 12, "bold"),
-            width=20,
-            relief="groove",
-            bd=2
-        ).pack(pady=20)
+            font=("Segoe UI", 11, "bold"),
+            bg=self.COLORS["primary"],
+            fg="white",
+            relief="flat",
+            activebackground=self.COLORS["accent"],
+            activeforeground="white",
+            cursor="hand2"
+        ).pack(pady=20, fill="x", padx=40, ipady=5)
 
         # Footer Label
         tk.Label(
             self,
-            text="Moonal Udhyog PVT. LTD. © 2024 | All Rights Reserved",
-            font=("Helvetica", 10),
-            bg="#E8B74D",  # Matches the main background
-            fg="#4B3E2F"  # Slightly darker brown for footer text
-        ).pack(side="bottom", pady=10)
+            text="Moonal Udhyog © 2024 | Secure Administration",
+            font=("Segoe UI", 10),
+            bg=self.COLORS["bg"],
+            fg="#9E9E9E"
+        ).pack(side="bottom", pady=20)
 
     def reset_password(self):
         """Handle the password reset logic."""
         username = self.username_entry.get()
         pin1 = 543210
         pin2 = 852036
-        pin1_entry = self.pin1_entry.get()
-        pin2_entry = self.pin2_entry.get()
-        new_password = self.new_password_entry.get()
-        confirm_password = self.confirm_password_entry.get()
+        pin1_e = self.pin1_entry.get()
+        pin2_e = self.pin2_entry.get()
+        new_p = self.new_password_entry.get()
+        conf_p = self.confirm_password_entry.get()
 
-        # Validate password fields
-        if new_password != confirm_password:
-            messagebox.showerror("Error", "Passwords do not match.", parent=self)
-            return
-
-        # Check if username exists
-        user = AuthController.get_user(username)
-        if not user:
-            messagebox.showerror("Error", "Username not found.", parent=self)
-            return
+        if new_p != conf_p:
+            return messagebox.showerror("Error", "Passwords do not match.")
 
         # Validate PINs
-        if str(pin1) != pin1_entry or str(pin2) != pin2_entry:
-            messagebox.showerror("Error", "Invalid PIN 1 or PIN 2.", parent=self)
-            return
+        if str(pin1) != pin1_e or str(pin2) != pin2_e:
+            return messagebox.showerror("Error", "Invalid Security PINs.")
 
-        # Update password
-        AuthController.forgot_password(username, pin1_entry, pin2_entry, new_password)
-        messagebox.showinfo("Success", "Password reset successfully. You can now log in.", parent=self)
-        self.destroy()
+        try:
+            AuthController.forgot_password(username, pin1_e, pin2_e, new_p)
+            messagebox.showinfo("Success", "Password reset successfully. You can now log in.")
+            self.controller.show_login()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))

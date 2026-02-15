@@ -34,33 +34,23 @@ class InvoiceUtils:
 
     @staticmethod
     def get_last_invoice(current_fiscal_year, invoice_file):
-        """Retrieve the last invoice number from a file."""
+        """Retrieve the last invoice number from a file (Deprecated)."""
         if not os.path.exists(invoice_file):
-            return 0  # Start fresh if the file doesn't exist
+            return 0
 
         with open(invoice_file, "r") as file:
             data = file.read().strip()
             try:
                 file_fiscal_year, invoice_number = data.split('-')
-                # If the fiscal year matches, continue with the previous sequence
                 if file_fiscal_year == current_fiscal_year:
                     return int(invoice_number)
             except ValueError:
                 pass
 
-        return 0  # Reset the sequence if the fiscal year has changed
+        return 0
 
     @staticmethod
-    def generate_invoice_number(current_fiscal_year, invoice_file):
-        """Generate a new invoice number."""
-        # Retrieve the last invoice number
-        last_invoice = InvoiceUtils.get_last_invoice(current_fiscal_year, invoice_file)
-
-        # Increment the last invoice number
-        last_invoice += 1
-
-        # Save the last invoice number back to the file
-        with open(invoice_file, "w") as file:
-            file.write(f"{current_fiscal_year}-{last_invoice:03}")
-
-        return f"# {last_invoice:03}"
+    def generate_invoice_number(current_fiscal_year):
+        """Generate a new invoice number using the database."""
+        from controllers.invoice_controller import InvoiceController
+        return InvoiceController.get_next_invoice_number(current_fiscal_year)

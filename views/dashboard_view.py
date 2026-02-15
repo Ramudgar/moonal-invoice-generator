@@ -1,138 +1,67 @@
 import tkinter as tk
-from tkinter import ttk
-from views.product_view import ProductView
-from views.invoice_view import InvoiceView
-from views.invoice_management_view import InvoiceManagementView
-from views.change_credentials_view import ChangeCredentialsView  # Import the Change Credentials View
+from tkinter import ttk, messagebox
+from controllers.authController import AuthController
 
+class DashboardView(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.COLORS = controller.COLORS
+        self.configure(bg=self.COLORS["bg"])
 
-class DashboardView(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Moonal Udhyog PVT. LTD. - Invoice Management System")
+        # Main Container
+        self.main_container = tk.Frame(self, bg=self.COLORS["bg"], padx=50, pady=50)
+        self.main_container.pack(expand=True, fill="both")
 
-        # Manually maximize the window (cross-platform compatible)
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        self.geometry(f"{screen_width}x{screen_height}")  # Set to full screen dimensions
-
-        self.configure(bg="#E8B74D")  # Golden hue for the main background
-
-        # Title label with updated styling
-        self.create_title()
-
-        # Navigation buttons with modern design
-        self.create_button_frame()
-
-        # Footer section
+        self.create_header()
+        self.create_navigation()
         self.create_footer()
 
-    def create_title(self):
-        """Creates a styled title section."""
-        title_frame = tk.Frame(self, bg="#E8B74D")
-        title_frame.pack(pady=40)
+    def create_header(self):
+        """Creates a professional header section."""
+        header = tk.Frame(self.main_container, bg=self.COLORS["bg"])
+        header.pack(fill="x", pady=(0, 40))
 
-        title_label = tk.Label(
-            title_frame,
-            text="🌟 Manage Your Invoices 🌟",
-            font=("Helvetica", 24, "bold"),
-            bg="#E8B74D",  # Matches the main background
-            fg="#4B3E2F",  # Dark brown for readability
-        )
-        title_label.pack()
+        tk.Label(header, text="MOONAL UDHYOG", font=("Segoe UI", 28, "bold"), bg=self.COLORS["bg"], fg=self.COLORS["primary"]).pack()
+        tk.Label(header, text="Invoice Management System", font=("Segoe UI", 12), bg=self.COLORS["bg"], fg="#757575").pack()
+        
+        # Subtle divider
+        tk.Frame(header, height=2, width=100, bg=self.COLORS["accent"]).pack(pady=10)
 
-        subtitle_label = tk.Label(
-            title_frame,
-            text="Simplify Your Business Operations",
-            font=("Helvetica", 14),
-            bg="#E8B74D",
-            fg="#6B4226"  # Slightly lighter brown for the subtitle
-        )
-        subtitle_label.pack()
+    def create_navigation(self):
+        """Creates centered navigation cards."""
+        nav_frame = tk.Frame(self.main_container, bg=self.COLORS["bg"])
+        nav_frame.pack(expand=True)
 
-    def create_button_frame(self):
-        """Creates and displays the button frame for navigation."""
-        button_frame = tk.Frame(self, bg="#FFF8E1", relief="solid", bd=2)  # Light cream for button frame
-        button_frame.place(relx=0.5, rely=0.55, anchor="center")  # Centered in the screen
-
-        # Define button styling
+        # Style setup
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure(
-            "Dashboard.TButton",
-            font=("Helvetica", 14, "bold"),
-            padding=15,
-            width=30,
-            foreground="#FFFFFF",  # White text for readability
-            background="#6B4226",  # Dark brown button background
-            borderwidth=3,
-        )
-        style.map(
-            "Dashboard.TButton",
-            background=[("active", "#4B3E2F")],  # Darker brown on hover
-            foreground=[("active", "#FFFFFF")],  # White text on hover
-        )
+        style.configure("Dashboard.TButton", font=("Segoe UI", 12, "bold"), padding=20, background="white", foreground=self.COLORS["text"])
+        style.map("Dashboard.TButton", background=[("active", self.COLORS["primary"])], foreground=[("active", "white")])
+        
+        buttons = [
+            ("🛒  MANAGE PRODUCTS", self.controller.show_product_manager),
+            ("📄  GENERATE INVOICE", self.controller.show_invoice_generator),
+            ("📂  INVOICE HISTORY", self.controller.show_invoice_history),
+            ("📊  REPORTS & ANALYTICS", self.controller.show_reports),
+            ("🔑  SECURITY SETTINGS", self.change_password)
+        ]
 
-        # Buttons for navigation
-        ttk.Button(
-            button_frame,
-            text="🛒 Manage Products",
-            style="Dashboard.TButton",
-            command=self.open_product_view
-        ).grid(row=0, column=0, padx=20, pady=15)
+        if AuthController.is_admin():
+            buttons.append(("🛡️  ADMIN PANEL", self.controller.show_admin_panel))
 
-        ttk.Button(
-            button_frame,
-            text="📄 Generate New Invoice",
-            style="Dashboard.TButton",
-            command=self.open_invoice_view
-        ).grid(row=1, column=0, padx=20, pady=15)
-
-        ttk.Button(
-            button_frame,
-            text="📂 View Past Invoices",
-            style="Dashboard.TButton",
-            command=self.view_invoices
-        ).grid(row=2, column=0, padx=20, pady=15)
-
-        ttk.Button(
-            button_frame,
-            text="🔒 Change Password",
-            style="Dashboard.TButton",
-            command=self.change_password
-        ).grid(row=3, column=0, padx=20, pady=15)
+        for i, (text, cmd) in enumerate(buttons):
+            btn = ttk.Button(nav_frame, text=text, style="Dashboard.TButton", command=cmd, width=35)
+            btn.grid(row=i//2, column=i%2, padx=20, pady=20)
 
     def create_footer(self):
-        """Creates the footer with company information."""
-        footer_frame = tk.Frame(self, bg="#E8B74D")  # Matches the main background
-        footer_frame.pack(side="bottom", fill="x")
-        footer_label = tk.Label(
-            footer_frame,
-            text="Moonal Udhyog PVT. LTD. © 2024 | All Rights Reserved",
-            font=("Helvetica", 10),
-            bg="#E8B74D",  # Matches the footer background
-            fg="#4B3E2F"  # Darker brown for footer text
-        )
-        footer_label.pack(pady=10)
-
-    def open_product_view(self):
-        """Open the product management view."""
-        ProductView(self)
-
-    def open_invoice_view(self):
-        """Open the invoice generation view."""
-        InvoiceView(self)
-
-    def view_invoices(self):
-        """Open the past invoices management view."""
-        InvoiceManagementView(self)  # Replace with actual implementation
+        """Creates a clean footer."""
+        footer = tk.Frame(self, bg="white", height=50)
+        footer.pack(side="bottom", fill="x")
+        
+        tk.Label(footer, text="Powered by Nexpioneer Technologies Pvt. Ltd. | Professional Invoice Solutions", 
+                 font=("Segoe UI", 9), bg="white", fg="#9E9E9E").pack(pady=15)
 
     def change_password(self):
-        """Open the Change Password View."""
-        ChangeCredentialsView()  # Open the Change Credentials View
-
-
-# Uncomment below to run independently for testing
-# if __name__ == "__main__":
-#     app = DashboardView()
-#     app.mainloop()
+        """Navigate to the Security Settings view."""
+        self.controller.show_security_settings()
