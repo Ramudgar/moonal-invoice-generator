@@ -1,67 +1,127 @@
+"""
+DashboardView — KPI cards and quick actions in warm light theme.
+Renders inside AppShell content area. Responsive layout.
+"""
 import tkinter as tk
-from tkinter import ttk, messagebox
-from controllers.authController import AuthController
+from tkinter import ttk
+from config.settings import Settings
+from controllers.product_controller import ProductController
+
 
 class DashboardView(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-        self.COLORS = controller.COLORS
-        self.configure(bg=self.COLORS["bg"])
+        self.C = Settings.COLORS
 
-        # Main Container
-        self.main_container = tk.Frame(self, bg=self.COLORS["bg"], padx=50, pady=50)
-        self.main_container.pack(expand=True, fill="both")
+        # Responsive fonts
+        try:
+            sw = self.winfo_screenwidth()
+        except Exception:
+            sw = 1920
+        self.F = Settings.get_fonts(sw)
 
-        self.create_header()
-        self.create_navigation()
-        self.create_footer()
+        self.configure(bg=self.C["bg"])
+        self._build_welcome()
+        self._build_kpi_cards()
+        self._build_quick_actions()
 
-    def create_header(self):
-        """Creates a professional header section."""
-        header = tk.Frame(self.main_container, bg=self.COLORS["bg"])
-        header.pack(fill="x", pady=(0, 40))
+    def _build_welcome(self):
+        top = tk.Frame(self, bg=self.C["bg"], padx=28, pady=20)
+        top.pack(fill="x")
+        tk.Label(top, text="Welcome Back 👋", font=self.F["h2"],
+                 bg=self.C["bg"], fg=self.C["text"]).pack(anchor="w")
+        tk.Label(top, text="Here's an overview of your business today.",
+                 font=self.F["body"], bg=self.C["bg"], fg=self.C["secondary"]).pack(anchor="w")
 
-        tk.Label(header, text="MOONAL UDHYOG", font=("Segoe UI", 28, "bold"), bg=self.COLORS["bg"], fg=self.COLORS["primary"]).pack()
-        tk.Label(header, text="Invoice Management System", font=("Segoe UI", 12), bg=self.COLORS["bg"], fg="#757575").pack()
-        
-        # Subtle divider
-        tk.Frame(header, height=2, width=100, bg=self.COLORS["accent"]).pack(pady=10)
+    def _build_kpi_cards(self):
+        wrapper = tk.Frame(self, bg=self.C["bg"], padx=28)
+        wrapper.pack(fill="x")
 
-    def create_navigation(self):
-        """Creates centered navigation cards."""
-        nav_frame = tk.Frame(self.main_container, bg=self.COLORS["bg"])
-        nav_frame.pack(expand=True)
+        try:
+            products = ProductController.get_all_products()
+        except Exception:
+            products = []
 
-        # Style setup
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("Dashboard.TButton", font=("Segoe UI", 12, "bold"), padding=20, background="white", foreground=self.COLORS["text"])
-        style.map("Dashboard.TButton", background=[("active", self.COLORS["primary"])], foreground=[("active", "white")])
-        
-        buttons = [
-            ("🛒  MANAGE PRODUCTS", self.controller.show_product_manager),
-            ("📄  GENERATE INVOICE", self.controller.show_invoice_generator),
-            ("📂  INVOICE HISTORY", self.controller.show_invoice_history),
-            ("📊  REPORTS & ANALYTICS", self.controller.show_reports),
-            ("🔑  SECURITY SETTINGS", self.change_password)
+        total = len(products)
+        categories = len(set(p[6] for p in products if len(p) > 6)) if products else 0
+        avg_price = sum(float(p[2]) for p in products) / total if total > 0 else 0
+        low_stock = sum(1 for p in products if len(p) > 10 and float(p[10]) < 10) if products else 0
+
+        cards_data = [
+            ("Total Products", str(total), "📦", self.C["primary"]),
+            ("Categories", str(categories), "📂", self.C["info"]),
+            ("Avg Price", f"Rs. {avg_price:,.0f}", "💰", self.C["success"]),
+            ("Low Stock", str(low_stock), "⚠️", self.C["danger"] if low_stock > 0 else self.C["muted"]),
         ]
 
-        if AuthController.is_admin():
-            buttons.append(("🛡️  ADMIN PANEL", self.controller.show_admin_panel))
+        for i, (title, value, icon, accent) in enumerate(cards_data):
+            card = tk.Frame(wrapper, bg="white", padx=20, pady=18,
+                            highlightbackground=self.C["border"], highlightthickness=1)
+            card.pack(side="left", fill="x", expand=True, padx=(0 if i == 0 else 8, 0))
 
-        for i, (text, cmd) in enumerate(buttons):
-            btn = ttk.Button(nav_frame, text=text, style="Dashboard.TButton", command=cmd, width=35)
-            btn.grid(row=i//2, column=i%2, padx=20, pady=20)
+            # Accent top bar
+            bar = tk.Frame(card, bg=accent, height=3)
+            bar.pack(fill="x", pady=(0, 10))
 
-    def create_footer(self):
-        """Creates a clean footer."""
-        footer = tk.Frame(self, bg="white", height=50)
-        footer.pack(side="bottom", fill="x")
-        
-        tk.Label(footer, text="Powered by Nexpioneer Technologies Pvt. Ltd. | Professional Invoice Solutions", 
-                 font=("Segoe UI", 9), bg="white", fg="#9E9E9E").pack(pady=15)
+            tk.Label(card, text=icon, font=("Segoe UI", 20),
+                     bg="white", fg=accent).pack(anchor="w")
+            tk.Label(card, text=value, font=("Segoe UI", 22, "bold"),
+                     bg="white", fg=self.C["text"]).pack(anchor="w")
+            tk.Label(card, text=title, font=self.F["small"],
+                     bg="white", fg=self.C["secondary"]).pack(anchor="w")
 
-    def change_password(self):
-        """Navigate to the Security Settings view."""
-        self.controller.show_security_settings()
+            # Hover effect
+            def on_enter(e, c=card):
+                c.config(highlightbackground=self.C["primary"])
+            def on_leave(e, c=card):
+                c.config(highlightbackground=self.C["border"])
+            card.bind("<Enter>", on_enter)
+            card.bind("<Leave>", on_leave)
+
+    def _build_quick_actions(self):
+        section = tk.Frame(self, bg=self.C["bg"], padx=28, pady=20)
+        section.pack(fill="x")
+        tk.Label(section, text="Quick Actions", font=self.F["h3"],
+                 bg=self.C["bg"], fg=self.C["text"]).pack(anchor="w", pady=(0, 12))
+
+        grid = tk.Frame(section, bg=self.C["bg"])
+        grid.pack(fill="x")
+
+        actions = [
+            ("📄", "New Invoice", "Create a new invoice", self.controller.show_invoice_generator, self.C["primary"]),
+            ("🛒", "Products", "Manage product catalog", self.controller.show_product_manager, self.C["info"]),
+            ("👥", "Customers", "View customer list", self.controller.show_customer_manager, self.C["success"]),
+            ("📂", "History", "Browse past invoices", self.controller.show_invoice_history, self.C["warning"]),
+            ("📈", "Reports", "Revenue & analytics", self.controller.show_reports, "#8B5CF6"),
+        ]
+
+        for i, (icon, title, desc, cmd, accent) in enumerate(actions):
+            card = tk.Frame(grid, bg="white", padx=16, pady=14, cursor="hand2",
+                            highlightbackground=self.C["border"], highlightthickness=1)
+            card.grid(row=0, column=i, padx=(0 if i == 0 else 6, 0), sticky="nsew")
+            grid.grid_columnconfigure(i, weight=1)
+
+            # Accent left bar
+            tk.Frame(card, bg=accent, width=3).pack(side="left", fill="y", padx=(0, 12))
+
+            inner = tk.Frame(card, bg="white", cursor="hand2")
+            inner.pack(fill="both", expand=True)
+
+            tk.Label(inner, text=icon, font=("Segoe UI", 16), bg="white",
+                     fg=accent, cursor="hand2").pack(anchor="w")
+            tk.Label(inner, text=title, font=self.F["body_bold"], bg="white",
+                     fg=self.C["text"], cursor="hand2").pack(anchor="w")
+            tk.Label(inner, text=desc, font=self.F["small"], bg="white",
+                     fg=self.C["muted"], cursor="hand2").pack(anchor="w")
+
+            # Click + hover
+            for w in [card, inner] + inner.winfo_children():
+                w.bind("<Button-1>", lambda e, c=cmd: c())
+
+            def on_enter(e, c=card):
+                c.config(highlightbackground=self.C["primary"])
+            def on_leave(e, c=card):
+                c.config(highlightbackground=self.C["border"])
+            card.bind("<Enter>", on_enter)
+            card.bind("<Leave>", on_leave)

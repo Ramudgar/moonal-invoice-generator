@@ -1,0 +1,53 @@
+Metadata-Version: 2.1
+Name: nepali-date-converter
+Version: 0.0.1
+Summary: NepaliDateConverter
+Home-page: https://github.com/GKisi27/nepali_date_converter
+Author: Gopal kisi
+Author-email: gkisi2772@gmail.com
+Keywords: python,tutorial,date_converter,bikram sambat,nepali date converter,nepali datetime,bs to ad converter,ad to bs converter,nepali datetime
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: nepali-datetime
+Provides-Extra: dev
+Requires-Dist: pytest (>=7.4) ; extra == 'dev'
+Requires-Dist: twine ; extra == 'dev'
+
+# Nepali Date Converter
+
+This is a simple project that converts dates between nepali and english dates.
+
+
+## Installation
+Run the following command to install:
+
+'''python
+pip install nepali_date_converter
+'''
+
+## Usage
+
+'''python
+
+# Generate "2080-03-18"
+from nepali_date_converter import english_to_nepali_converter
+english_to_nepali_converter(2023,7,3)
+
+# Generate "2023-07-03"
+from nepali_date_converter import nepali_to_english_converter
+nepali_to_english_converter(2080, 3, 18)
+'''
+
+# Developing nepali_date_converter
+
+To install nepali_date_converter, along with the tools you need to develop and run tests, run the following in your virtualenv:
+
+'''bash
+$ pip install -e .[dev]
+'''

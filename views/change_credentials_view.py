@@ -1,66 +1,80 @@
+"""
+ChangeCredentialsView — Security settings with light golden theme.
+Renders inside AppShell content area.
+"""
 import tkinter as tk
 from tkinter import ttk, messagebox
+from config.settings import Settings
 from controllers.authController import AuthController
 
+
 class ChangeCredentialsView(tk.Frame):
-    def __init__(self, parent, controller, is_default_user=False):
+    def __init__(self, parent, controller, is_default_user=False, **kwargs):
         super().__init__(parent)
         self.controller = controller
+        self.C = Settings.COLORS
+        self.F = Settings.FONTS
+        self.configure(bg=self.C["bg"])
         self.is_default_user = is_default_user
-        self.COLORS = controller.COLORS
-        self.configure(bg=self.COLORS["bg"])
+        self._build_ui()
 
-        # Header
-        header = tk.Frame(self, bg=self.COLORS["primary"], padx=20, pady=10)
-        header.pack(fill="x")
-        
-        # If default user, they MUST change credentials, so maybe hide back if they aren't done?
-        # But user said back/forth button.
-        ttk.Button(header, text="← BACK", command=self.controller.show_dashboard if not is_default_user else self.controller.show_login).pack(side="left")
-        
-        tk.Label(header, text="ACCOUNT SECURITY", font=("Segoe UI", 16, "bold"), bg=self.COLORS["primary"], fg="white").pack(side="left", padx=20)
+    def _build_ui(self):
+        # Configure grid for centering
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
-        # Form Card
-        card = tk.Frame(self, bg="white", padx=40, pady=40, highlightbackground="#E0E0E0", highlightthickness=1)
-        card.place(relx=0.5, rely=0.5, anchor="center", width=500, height=500)
+        # Centered card
+        card = tk.Frame(self, bg="white", padx=40, pady=40,
+                        highlightbackground=self.C["border"], highlightthickness=1)
+        card.grid(row=0, column=0)
+        # Force specific width by wrapping or using a frame with width (grid propagates size)
+        # But for grid, we can just let intrinsic size work, or strict width
+        # Let's add an inner frame with requested width if needed, or just let padding decide.
+        # Original width was 440.
 
-        # Form Fields
-        def create_field(label, row):
-            tk.Label(card, text=label, font=("Segoe UI", 9, "bold"), bg="white", fg=self.COLORS["secondary"]).grid(row=row*2, column=0, sticky="w", pady=(15, 0))
-            e = tk.Entry(card, font=("Segoe UI", 11), width=45, bg="#F8F9FA", highlightthickness=1, highlightbackground="#D1D1D1", relief="flat")
-            if "PASSWORD" in label: e.config(show="•")
-            e.grid(row=row*2+1, column=0, pady=(5, 10), ipady=5)
-            return e
+        if self.is_default_user:
+            warn = tk.Frame(card, bg="#FEF3C7", padx=12, pady=8)
+            warn.pack(fill="x", pady=(0, 16))
+            tk.Label(warn, text="⚠️  Please change the default password to continue.",
+                     font=self.F["small_bold"], bg="#FEF3C7",
+                     fg="#92400E").pack(anchor="w")
 
-        self.current_username_entry = create_field("CURRRENT USERNAME", 0)
-        self.current_password_entry = create_field("CURRENT PASSWORD", 1)
-        self.new_username_entry = create_field("NEW USERNAME", 2)
-        self.new_password_entry = create_field("NEW PASSWORD", 3)
+        tk.Label(card, text="Change Password", font=self.F["h3"],
+                 bg="white", fg=self.C["primary"]).pack(anchor="w", pady=(0, 20))
 
-        # Submit Button
-        style = ttk.Style()
-        style.configure("Security.TButton", font=("Segoe UI", 11, "bold"), background=self.COLORS["primary"], foreground="white")
-        
-        btn = ttk.Button(card, text="UPDATE CREDENTIALS", style="Security.TButton", command=self.change_credentials)
-        btn.grid(row=8, column=0, pady=30, sticky="ew")
+        self.entries = {}
+        for label, key in [("Current Password", "current"),
+                           ("New Password", "new"),
+                           ("Confirm New Password", "confirm")]:
+            tk.Label(card, text=label.upper(), font=self.F["small_bold"],
+                     bg="white", fg=self.C["secondary"]).pack(anchor="w")
+            e = tk.Entry(card, font=self.F["body"], show="•",
+                         bg=self.C["input_bg"], relief="flat",
+                         highlightthickness=2,
+                         highlightbackground=self.C["input_border"],
+                         highlightcolor=self.C["primary"])
+            e.pack(fill="x", ipady=5, pady=(2, 12))
+            self.entries[key] = e
 
-        # Footer
-        tk.Label(self, text="Moonal Udhyog © 2024 | Secure Administration", 
-                 font=("Segoe UI", 10), bg=self.COLORS["bg"], fg="#9E9E9E").pack(side="bottom", pady=20)
+        ttk.Button(card, text="Update Password", style="Gold.TButton",
+                    command=self.change_password).pack(fill="x", ipady=2)
 
-    def change_credentials(self):
-        """Handle changing user credentials."""
-        curr_u = self.current_username_entry.get()
-        curr_p = self.current_password_entry.get()
-        new_u = self.new_username_entry.get()
-        new_p = self.new_password_entry.get()
+    def change_password(self):
+        current = self.entries["current"].get()
+        new = self.entries["new"].get()
+        confirm = self.entries["confirm"].get()
+
+        if not current or not new or not confirm:
+            return messagebox.showwarning("Missing", "All fields are required.")
+        if new != confirm:
+            return messagebox.showerror("Mismatch", "New passwords don't match.")
+        if len(new) < 4:
+            return messagebox.showerror("Weak", "Password must be at least 4 characters.")
 
         try:
-            AuthController.change_credentials(curr_u, curr_p, new_u, new_p)
-            messagebox.showinfo("Success", "Credentials updated successfully.")
-            if self.is_default_user:
-                self.controller.show_dashboard()
-            else:
-                self.controller.show_dashboard()
-        except ValueError as e:
-            messagebox.showerror("Error", str(e), parent=self)
+            user = AuthController.CURRENT_USER
+            AuthController.change_password(user, current, new)
+            messagebox.showinfo("Success", "Password changed successfully.")
+            self.controller.show_dashboard()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))

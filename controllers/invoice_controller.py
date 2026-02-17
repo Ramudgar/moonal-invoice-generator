@@ -1,6 +1,7 @@
 from config.database import connect_db
 from datetime import datetime
 from utils.invoice_utils import InvoiceUtils
+from controllers.product_controller import ProductController
  
 
 class InvoiceController:
@@ -71,7 +72,7 @@ class InvoiceController:
         cursor.execute("""
             SELECT invoice_id, invoice_number, client_name, date, total_amount,
                    COALESCE(status, 'ACTIVE') as status,
-                   is_credit_note
+                   is_credit_note, paid_amount, due_amount
             FROM Invoices
             ORDER BY invoice_id DESC
         """)
@@ -82,7 +83,9 @@ class InvoiceController:
             "date": row[3],
             "total_amount": row[4],
             "status": row[5],
-            "is_credit_note": row[6]
+            "is_credit_note": row[6],
+            "paid_amount": row[7],
+            "due_amount": row[8]
         } for row in cursor.fetchall()]
         conn.close()
         return invoices
@@ -182,14 +185,6 @@ class InvoiceController:
         if original_data['status'] == 'CANCELLED':
             raise ValueError("This invoice is already cancelled.")
 
-        # 2. Prepare negative items for Credit Note
-        cn_items = []
-        for item in original_items:
-            # Need product_id. get_invoice_details doesn't return it.
-            # We need to fetch product_id for these items. 
-            # This is tricky. Let's do a direct query for items with product_ids.
-            pass
-
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("SELECT product_id, quantity, price_per_unit FROM Invoice_Items WHERE invoice_id = ?", (original_invoice_id,))
@@ -263,6 +258,24 @@ class InvoiceController:
             original_invoice_id=original_invoice_id,
             cancellation_comment=comment
         )
+        
+        # 6. Restore Stock (Credit Note implies items returned or cancelled)
+        # We passed negative quantity items to create_invoice (which doesn't adjust stock).
+        # We need to explicitly adjust stock back.
+        # Since cn_items has negative quantity (e.g. -5), passing -(-5) = +5 restores stock.
+        for item in cn_items:
+            try:
+                ProductController.adjust_stock(item['product_id'], -item['quantity'])
+            except Exception as e:
+                print(f"Error restoring stock for product {item['product_id']}: {e}")
+
+    @staticmethod
+    def cancel_invoice(invoice_id, reason, comment=''):
+        """
+        Wrapper Update: Alias for create_credit_note to match UI call.
+        Cancels the invoice by generating a Credit Note and restoring stock.
+        """
+        InvoiceController.create_credit_note(invoice_id, reason, comment)
 
 
     @staticmethod
@@ -275,9 +288,6 @@ class InvoiceController:
         cursor = conn.cursor()
         
         try:
-            # Begin exclusive transaction to lock the table
-            cursor.execute("BEGIN EXCLUSIVE")
-            
             # Search for max invoice number in current fiscal year (MU/FY/XXXX)
             pattern = f"MU/{fiscal_year}/%"
             cursor.execute("""

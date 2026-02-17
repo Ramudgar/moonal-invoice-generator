@@ -48,7 +48,7 @@ DB_NAME = get_persistent_db_path()
 def connect_db():
     """Connect to the SQLite database, creating it if necessary."""
     try:
-        conn = sqlite3.connect(DB_NAME)
+        conn = sqlite3.connect(DB_NAME, timeout=30)
         conn.row_factory = sqlite3.Row
         # Enable Write-Ahead Logging for concurrency and safety
         conn.execute("PRAGMA journal_mode=WAL;")
@@ -85,11 +85,17 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS Products (
             product_id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            brand TEXT,
+            viscosity TEXT,
+            category TEXT DEFAULT 'Lubricant',
+            unit TEXT DEFAULT 'Ltr',
             price REAL NOT NULL DEFAULT 0,
+            purchase_price REAL DEFAULT 0,
+            stock_quantity INTEGER DEFAULT 0,
+            min_stock_alert INTEGER DEFAULT 10,
             hs_code TEXT,
             description TEXT DEFAULT '',
-            unit TEXT DEFAULT 'Ltr',
-            category TEXT DEFAULT 'Lubricant'
+            batch_number TEXT
         )
         ''')
 
@@ -145,6 +151,28 @@ def create_tables():
                 FOREIGN KEY (product_id) REFERENCES Products(product_id)
             )
         ''')
+        # Customers Table (CRM)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                pan_vat TEXT UNIQUE,
+                address TEXT,
+                contact_person TEXT,
+                mobile TEXT,
+                email TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Global Settings Table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        ''')
+        
         conn.commit()
         print("Tables created successfully!")
 
@@ -156,7 +184,25 @@ def create_tables():
         print(f"Error creating tables: {e}")
         return
     finally:
-        conn.close()
+        if conn:
+            _seed_default_settings(conn)
+            conn.close()
+
+
+def _seed_default_settings(conn):
+    """Seed the settings table with default company info if empty."""
+    cursor = conn.cursor()
+    defaults = [
+        ('company_name', 'MOONAL UDHYOG PVT. LTD.'),
+        ('company_address', 'Golbazar-4, Siraha, Nepal'),
+        ('company_contact', '9844000000'),
+        ('company_pan', '123456789'),
+        ('default_vat', '13'),
+        ('currency_symbol', 'Rs.')
+    ]
+    for key, value in defaults:
+        cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (key, value))
+    conn.commit()
 
 
 def _migrate_products_table(conn):
@@ -168,6 +214,12 @@ def _migrate_products_table(conn):
         ("description", "TEXT DEFAULT ''"),
         ("unit", "TEXT DEFAULT 'Ltr'"),
         ("category", "TEXT DEFAULT 'Lubricant'"),
+        ("brand", "TEXT DEFAULT ''"),
+        ("viscosity", "TEXT DEFAULT ''"),
+        ("purchase_price", "REAL DEFAULT 0"),
+        ("stock_quantity", "INTEGER DEFAULT 0"),
+        ("min_stock_alert", "INTEGER DEFAULT 10"),
+        ("batch_number", "TEXT DEFAULT ''")
     ]
     for col_name, col_type in migrations:
         if col_name not in existing_cols:

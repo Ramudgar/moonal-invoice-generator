@@ -4,3 +4,6 @@ docopt==0.6.2
 num2words==0.5.13
 pillow==11.0.0
 reportlab==4.2.5
+pytest==8.0.0
+tkcalendar==1.6.1
+nepali-datetime==1.0.8.4

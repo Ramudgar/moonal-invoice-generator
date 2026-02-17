@@ -1,448 +1,233 @@
+"""
+ProductView — Product management with light golden theme.
+Renders inside AppShell content area.
+"""
 import tkinter as tk
 from tkinter import ttk, messagebox
+from config.settings import Settings
 from controllers.product_controller import ProductController
 
 
 class ProductView(tk.Frame):
-    """Premium Product Management view for Moonal Udhyog IMS."""
-
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-        self.COLORS = controller.COLORS
-        self.configure(bg=self.COLORS["bg"])
-        self.selected_product_id = None  # Always stored as int or None
+        self.C = Settings.COLORS
+        self.F = Settings.FONTS
+        self.configure(bg=self.C["bg"])
+        self.selected_product_id = None
 
-        self._apply_styles()
-        self._build_header()
         self._build_stats_bar()
-        self._build_content()
-        self._refresh_all()
-
-    # ─── Styles ────────────────────────────────────────────────────────
-
-    def _apply_styles(self):
-        style = ttk.Style()
-        style.theme_use("clam")
-
-        # Treeview styling
-        style.configure("Product.Treeview",
-                         background="white",
-                         foreground=self.COLORS["text"],
-                         rowheight=34,
-                         fieldbackground="white",
-                         font=("Segoe UI", 10))
-        style.configure("Product.Treeview.Heading",
-                         background=self.COLORS["primary"],
-                         foreground="white",
-                         font=("Segoe UI", 9, "bold"),
-                         relief="flat",
-                         padding=6)
-        style.map("Product.Treeview.Heading",
-                   background=[("active", "#B8960E")])
-
-        # Selection colors for treeview
-        style.map("Product.Treeview",
-                   background=[("selected", "#D4AF37")],
-                   foreground=[("selected", "white")])
-
-        # Buttons
-        style.configure("Gold.TButton",
-                         font=("Segoe UI", 10, "bold"), padding=8,
-                         background=self.COLORS["primary"], foreground="white")
-        style.map("Gold.TButton",
-                   background=[("active", "#B8960E"), ("disabled", "#E0E0E0")])
-        style.configure("Danger.TButton",
-                         font=("Segoe UI", 10, "bold"), padding=8,
-                         background="#D32F2F", foreground="white")
-        style.map("Danger.TButton",
-                   background=[("active", "#B71C1C"), ("disabled", "#E0E0E0")])
-        style.configure("Pink.TButton",
-                         font=("Segoe UI", 10, "bold"), padding=8,
-                         background=self.COLORS["accent"], foreground="white")
-        style.map("Pink.TButton",
-                   background=[("active", "#C2185B"), ("disabled", "#E0E0E0")])
-        style.configure("Ghost.TButton",
-                         font=("Segoe UI", 10), padding=8,
-                         background="#F5F5F5", foreground=self.COLORS["secondary"])
-        style.map("Ghost.TButton",
-                   background=[("active", "#EEEEEE")])
-
-    # ─── Header ────────────────────────────────────────────────────────
-
-    def _build_header(self):
-        header = tk.Frame(self, bg=self.COLORS["primary"], padx=20, pady=12)
-        header.pack(fill="x")
-
-        # Left: Back + Title
-        left = tk.Frame(header, bg=self.COLORS["primary"])
-        left.pack(side="left")
-        ttk.Button(left, text="← DASHBOARD", command=self.controller.show_dashboard,
-                   style="Ghost.TButton").pack(side="left", padx=(0, 15))
-        tk.Label(left, text="PRODUCT CATALOG", font=("Segoe UI", 16, "bold"),
-                 bg=self.COLORS["primary"], fg="white").pack(side="left")
-
-        # Right: Search bar
-        search_frame = tk.Frame(header, bg=self.COLORS["primary"])
-        search_frame.pack(side="right")
-
-        tk.Label(search_frame, text="🔍", font=("Segoe UI", 12),
-                 bg=self.COLORS["primary"], fg="white").pack(side="left", padx=(0, 5))
-        self.search_var = tk.StringVar()
-        self.search_var.trace_add("write", self._on_search)
-        search_entry = tk.Entry(search_frame, textvariable=self.search_var,
-                                font=("Segoe UI", 11), bg="white", fg=self.COLORS["text"],
-                                relief="flat", highlightthickness=2,
-                                highlightbackground="#B8960E",
-                                highlightcolor="#D4AF37", width=30)
-        search_entry.pack(side="left", ipady=4)
-
-    # ─── Stats Bar ─────────────────────────────────────────────────────
+        self._build_main_layout()
+        self.load_products()
 
     def _build_stats_bar(self):
-        self.stats_frame = tk.Frame(self, bg="white", pady=8)
-        self.stats_frame.pack(fill="x")
+        bar = tk.Frame(self, bg=self.C["bg"], padx=24, pady=12)
+        bar.pack(fill="x")
 
-        self.stat_labels = {}
-        stats_data = [
-            ("total", "📦 TOTAL PRODUCTS", "0"),
-            ("categories", "🏷️ CATEGORIES", "0"),
-            ("avg_price", "💰 AVG. PRICE", "Rs. 0.00"),
+        try:
+            products = ProductController.get_all_products()
+        except Exception:
+            products = []
+
+        total = len(products)
+        low = sum(1 for p in products if len(p) > 10 and float(p[10]) < 10)
+
+        for i, (label, val, color) in enumerate([
+            ("Total Products", str(total), self.C["primary"]),
+            ("Low Stock", str(low), self.C["danger"] if low > 0 else self.C["muted"]),
+        ]):
+            chip = tk.Frame(bar, bg="white", padx=16, pady=8,
+                            highlightbackground=self.C["border"], highlightthickness=1)
+            chip.pack(side="left", padx=(0 if i == 0 else 8, 0))
+            tk.Label(chip, text=f"{label}: ", font=self.F["small"],
+                     bg="white", fg=self.C["secondary"]).pack(side="left")
+            tk.Label(chip, text=val, font=self.F["body_bold"],
+                     bg="white", fg=color).pack(side="left")
+
+    def _build_main_layout(self):
+        main = tk.Frame(self, bg=self.C["bg"], padx=24)
+        main.pack(fill="both", expand=True)
+
+        # Left: Form
+        left = tk.Frame(main, bg="white", padx=24, pady=20,
+                        highlightbackground=self.C["border"], highlightthickness=1)
+        left.pack(side="left", fill="y", padx=(0, 16))
+
+        tk.Label(left, text="Product Details", font=self.F["h3"],
+                 bg="white", fg=self.C["primary"]).pack(anchor="w", pady=(0, 16))
+
+        self.entries = {}
+        # We'll use a grid for a cleaner layout
+        form_grid = tk.Frame(left, bg="white")
+        form_grid.pack(fill="x", pady=(0, 10))
+        form_grid.columnconfigure(0, weight=1)
+        form_grid.columnconfigure(1, weight=1)
+
+        fields = [
+            ("Product Name", "name", 0, 0, 2), # label, key, row, col, span
+            ("Unit Price (Rs.)", "price", 2, 0, 1),
+            ("HS Code", "hs_code", 2, 1, 1),
+            ("Category", "category", 4, 0, 1),
+            ("Unit", "unit", 4, 1, 1),
+            ("Current Stock", "stock", 6, 0, 1),
+            ("Min Stock Alert", "min", 6, 1, 1),
+            ("Description", "desc", 8, 0, 2)
         ]
-        for key, title, default in stats_data:
-            card = tk.Frame(self.stats_frame, bg="white", padx=30)
-            card.pack(side="left", expand=True)
-            tk.Label(card, text=title, font=("Segoe UI", 8, "bold"),
-                     bg="white", fg=self.COLORS["secondary"]).pack()
-            lbl = tk.Label(card, text=default, font=("Segoe UI", 14, "bold"),
-                           bg="white", fg=self.COLORS["primary"])
-            lbl.pack()
-            self.stat_labels[key] = lbl
 
-        # Divider
-        tk.Frame(self, height=1, bg="#E0E0E0").pack(fill="x")
+        for label, key, r, c, span in fields:
+            lbl = tk.Label(form_grid, text=label.upper(), font=self.F["small_bold"],
+                           bg="white", fg=self.C["secondary"])
+            lbl.grid(row=r, column=c, columnspan=span, sticky="w", pady=(10 if r>0 else 0, 0), padx=(5 if c>0 else 0, 0))
+            
+            if key == "category":
+                e = ttk.Combobox(form_grid, values=[
+                    "Engine Oil", "Gear Oil", "Hydraulic Oil", "Transmission Fluid", 
+                    "Grease", "Coolant", "Brake Fluid", "Industrial Oil", "Other"
+                ], font=self.F["body"], state="normal")
+                e.grid(row=r+1, column=c, columnspan=span, sticky="ew", pady=(2, 0), ipady=5, padx=(5 if c>0 else 0, 0))
+            elif key == "unit":
+                e = ttk.Combobox(form_grid, values=[
+                    "Ltr", "Kg", "Pcs", "Barrel", "Drum", "Gallon", "Box", "Set"
+                ], font=self.F["body"], state="normal")
+                e.grid(row=r+1, column=c, columnspan=span, sticky="ew", pady=(2, 0), ipady=5, padx=(5 if c>0 else 0, 0))
+            else:
+                e = tk.Entry(form_grid, font=self.F["body"], bg=self.C["input_bg"],
+                             relief="flat", highlightthickness=2,
+                             highlightbackground=self.C["input_border"],
+                             highlightcolor=self.C["primary"])
+                e.grid(row=r+1, column=c, columnspan=span, sticky="ew", pady=(2, 0), ipady=5, padx=(5 if c>0 else 0, 0))
+            self.entries[key] = e
 
-    # ─── Main Content ──────────────────────────────────────────────────
+        btn_frame = tk.Frame(left, bg="white")
+        btn_frame.pack(fill="x", pady=(20, 0))
+        ttk.Button(btn_frame, text="💾  Save Product", style="Gold.TButton",
+                    command=self.save_product).pack(fill="x", ipady=5)
+        
+        lower_btns = tk.Frame(left, bg="white")
+        lower_btns.pack(fill="x", pady=(8, 0))
+        ttk.Button(lower_btns, text="🗑  Delete", style="Danger.TButton",
+                    command=self.delete_product).pack(side="left", fill="x", expand=True, padx=(0, 4))
+        ttk.Button(lower_btns, text="Clear", style="Ghost.TButton",
+                    command=self.clear_form).pack(side="left", fill="x", expand=True, padx=(4, 0))
 
-    def _build_content(self):
-        content = tk.Frame(self, bg=self.COLORS["bg"], padx=25, pady=15)
-        content.pack(fill="both", expand=True)
+        # Right: Table
+        right = tk.Frame(main, bg="white",
+                         highlightbackground=self.C["border"], highlightthickness=1)
+        right.pack(side="right", fill="both", expand=True)
 
-        # ── Left: Form Card ──
-        form_card = tk.Frame(content, bg="white", padx=25, pady=20,
-                             highlightbackground="#E0E0E0", highlightthickness=1)
-        form_card.pack(side="left", fill="y", padx=(0, 15))
+        # Search bar
+        search_frame = tk.Frame(right, bg="white", padx=16, pady=12)
+        search_frame.pack(fill="x")
+        tk.Label(search_frame, text="🔍", font=("Segoe UI", 11),
+                 bg="white", fg=self.C["muted"]).pack(side="left")
+        self.search_var = tk.StringVar()
+        self.search_var.trace_add("write", lambda *a: self.load_products())
+        search_entry = tk.Entry(search_frame, textvariable=self.search_var,
+                                font=self.F["body"], bg=self.C["input_bg"],
+                                relief="flat", highlightthickness=2,
+                                highlightbackground=self.C["input_border"],
+                                highlightcolor=self.C["primary"])
+        search_entry.pack(side="left", fill="x", expand=True, ipady=5, padx=8)
 
-        # Title row with mode indicator
-        title_row = tk.Frame(form_card, bg="white")
-        title_row.pack(fill="x", pady=(0, 15))
-        tk.Label(title_row, text="PRODUCT DETAILS", font=("Segoe UI", 12, "bold"),
-                 bg="white", fg=self.COLORS["primary"]).pack(side="left")
-        self.form_mode_label = tk.Label(title_row, text="  NEW  ", font=("Segoe UI", 8, "bold"),
-                                         bg="#E8F5E9", fg="#2E7D32", padx=8, pady=2)
-        self.form_mode_label.pack(side="right")
-
-        # Fields
-        self.name_entry = self._create_field(form_card, "PRODUCT NAME *", width=35)
-        self.hs_code_entry = self._create_field(form_card, "HS CODE", width=35)
-        self.price_entry = self._create_field(form_card, "UNIT PRICE (Rs.) *", width=35)
-        self.desc_entry = self._create_field(form_card, "DESCRIPTION", width=35)
-
-        # Unit dropdown
-        tk.Label(form_card, text="UNIT", font=("Segoe UI", 8, "bold"),
-                 bg="white", fg=self.COLORS["secondary"]).pack(anchor="w", pady=(8, 0))
-        self.unit_var = tk.StringVar(value="Ltr")
-        unit_combo = ttk.Combobox(form_card, textvariable=self.unit_var,
-                                  values=ProductController.UNITS,
-                                  font=("Segoe UI", 10), state="readonly", width=33)
-        unit_combo.pack(fill="x", pady=(2, 8), ipady=4)
-
-        # Category dropdown
-        tk.Label(form_card, text="CATEGORY", font=("Segoe UI", 8, "bold"),
-                 bg="white", fg=self.COLORS["secondary"]).pack(anchor="w", pady=(4, 0))
-        self.cat_var = tk.StringVar(value="Lubricant")
-        cat_combo = ttk.Combobox(form_card, textvariable=self.cat_var,
-                                 values=ProductController.CATEGORIES,
-                                 font=("Segoe UI", 10), state="readonly", width=33)
-        cat_combo.pack(fill="x", pady=(2, 8), ipady=4)
-
-        # Action buttons
-        btn_frame = tk.Frame(form_card, bg="white")
-        btn_frame.pack(fill="x", pady=(15, 5))
-
-        self.add_btn = ttk.Button(btn_frame, text="➕ ADD PRODUCT", style="Gold.TButton",
-                                  command=self._add_product)
-        self.add_btn.pack(fill="x", pady=(0, 5))
-
-        self.update_btn = ttk.Button(btn_frame, text="✏️ UPDATE PRODUCT", style="Pink.TButton",
-                                     command=self._update_product, state="disabled")
-        self.update_btn.pack(fill="x", pady=(0, 5))
-
-        self.delete_btn = ttk.Button(btn_frame, text="🗑️ DELETE PRODUCT", style="Danger.TButton",
-                                     command=self._delete_product, state="disabled")
-        self.delete_btn.pack(fill="x", pady=(0, 5))
-
-        ttk.Button(btn_frame, text="🔄 CLEAR FORM", style="Ghost.TButton",
-                   command=self._clear_form).pack(fill="x")
-
-        # ── Right: Table Card ──
-        table_card = tk.Frame(content, bg="white", padx=15, pady=15,
-                              highlightbackground="#E0E0E0", highlightthickness=1)
-        table_card.pack(side="right", fill="both", expand=True)
-
-        # Table header
-        table_header = tk.Frame(table_card, bg="white")
-        table_header.pack(fill="x", pady=(0, 10))
-        tk.Label(table_header, text="INVENTORY LIST", font=("Segoe UI", 12, "bold"),
-                 bg="white", fg=self.COLORS["primary"]).pack(side="left")
-        self.count_label = tk.Label(table_header, text="0 items", font=("Segoe UI", 9),
-                                    bg="white", fg=self.COLORS["secondary"])
-        self.count_label.pack(side="right")
-
-        # Treeview
-        columns = ("SN", "PID", "Name", "Category", "HS Code", "Unit", "Price")
-        self.tree = ttk.Treeview(table_card, columns=columns, show="headings",
-                                   style="Product.Treeview")
-
-        self.tree.heading("SN", text="S.N.")
-        self.tree.heading("PID", text="PID")
-        self.tree.heading("Name", text="PRODUCT NAME")
-        self.tree.heading("Category", text="CATEGORY")
-        self.tree.heading("HS Code", text="HS CODE")
-        self.tree.heading("Unit", text="UNIT")
-        self.tree.heading("Price", text="PRICE")
-
-        self.tree.column("SN", width=50, anchor="center")
-        self.tree.column("PID", width=80, anchor="center")
-        self.tree.column("Name", width=220, anchor="w")
-        self.tree.column("Category", width=120, anchor="center")
-        self.tree.column("HS Code", width=100, anchor="center")
-        self.tree.column("Unit", width=70, anchor="center")
-        self.tree.column("Price", width=110, anchor="e", minwidth=80)
-
-        scrollbar = ttk.Scrollbar(table_card, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
-        self.tree.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
+        cols = ("ID", "Name", "Price", "Stock", "Unit", "Category")
+        self.tree = ttk.Treeview(right, columns=cols, show="headings",
+                                  style="Custom.Treeview")
+        self.tree.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        for c in cols:
+            self.tree.heading(c, text=c)
+            self.tree.column(c, width=80 if c == "ID" else 120)
         self.tree.bind("<<TreeviewSelect>>", self._on_select)
 
-        # Empty state label
-        self.empty_label = tk.Label(table_card, text="No products found.\nAdd your first product using the form on the left.",
-                                     font=("Segoe UI", 11), bg="white", fg="#BDBDBD", justify="center")
-
-        # Footer
-        footer = tk.Frame(self, bg="white", height=40)
-        footer.pack(side="bottom", fill="x")
-        tk.Label(footer, text="Moonal Udhyog © 2024 | Product Catalog",
-                 font=("Segoe UI", 9), bg="white", fg="#9E9E9E").pack(pady=10)
-
-    # ─── Field Helper ──────────────────────────────────────────────────
-
-    def _create_field(self, parent, label, width=35):
-        tk.Label(parent, text=label, font=("Segoe UI", 8, "bold"),
-                 bg="white", fg=self.COLORS["secondary"]).pack(anchor="w", pady=(8, 0))
-        entry = tk.Entry(parent, font=("Segoe UI", 10), bg="#F8F9FA", relief="flat",
-                         highlightthickness=1, highlightbackground="#D1D1D1", width=width)
-        entry.pack(fill="x", pady=(2, 4), ipady=5)
-        return entry
-
-    # ─── Data Loading ──────────────────────────────────────────────────
-
-    def _refresh_all(self):
-        """Reload both the table and the stats bar."""
-        self._load_products()
-        self._refresh_stats()
-
-    def _load_products(self, products=None):
-        """Load products into the table."""
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        if products is None:
+    def load_products(self):
+        for i in self.tree.get_children():
+            self.tree.delete(i)
+        try:
             products = ProductController.get_all_products()
+        except Exception:
+            products = []
 
-        for i, p in enumerate(products, 1):
-            # p = (id, name, price, hs_code, description, unit, category)
-            pid, name, price, hs_code, desc, unit, category = p
-            tag = "even" if i % 2 == 0 else "odd"
-            systematic_pid = f"MU-P{pid:03d}"
-            self.tree.insert("", "end", iid=str(pid), values=(
-                i, systematic_pid, name, category or "—", hs_code or "—", unit or "Ltr", f"Rs. {float(price):,.2f}"
+        search = self.search_var.get().lower() if hasattr(self, 'search_var') else ""
+        for p in products:
+            if search and search not in p[1].lower():
+                continue
+            tag = "low_stock" if len(p) > 10 and float(p[10]) < 10 else ""
+            self.tree.insert("", "end", values=(
+                p[0], p[1], f"Rs. {float(p[2]):,.2f}",
+                p[10] if len(p) > 10 else "N/A",
+                p[5] if len(p) > 5 else "",
+                p[6] if len(p) > 6 else ""
             ), tags=(tag,))
 
-        # Zebra striping — these should NOT override selection
-        self.tree.tag_configure("even", background="white")
-        self.tree.tag_configure("odd", background="#F9F9F9")
-
-        # Empty state
-        count = len(products)
-        self.count_label.config(text=f"{count} item{'s' if count != 1 else ''}")
-        if count == 0:
-            self.empty_label.place(relx=0.5, rely=0.5, anchor="center")
-        else:
-            self.empty_label.place_forget()
-
-    def _refresh_stats(self):
-        """Update the stats bar."""
-        try:
-            total, cats, avg = ProductController.get_stats()
-            self.stat_labels["total"].config(text=str(total))
-            self.stat_labels["categories"].config(text=str(cats))
-            self.stat_labels["avg_price"].config(text=f"Rs. {avg:,.2f}")
-        except Exception:
-            pass
-
-    # ─── Search ────────────────────────────────────────────────────────
-
-    def _on_search(self, *args):
-        keyword = self.search_var.get().strip()
-        if keyword:
-            results = ProductController.search_products(keyword)
-            self._load_products(results)
-        else:
-            self._load_products()
-
-    # ─── Selection ─────────────────────────────────────────────────────
-
+        self.tree.tag_configure("low_stock", foreground=self.C["danger"])
+            
     def _on_select(self, event):
-        selected = self.tree.selection()
-        if not selected:
+        sel = self.tree.selection()
+        if not sel:
             return
-
-        vals = self.tree.item(selected[0], "values")
-        # vals = (ID, Name, Category, HS Code, Unit, Price)
-        self.selected_product_id = int(vals[0])  # Store as int for DB
-
-        # Populate form
-        self._clear_form(reset_mode=False)
-        self.name_entry.insert(0, vals[1])
-
-        # Get full product data for description field
+        values = self.tree.item(sel[0])["values"]
+        self.selected_product_id = values[0]
         try:
-            full = ProductController.get_all_products()
-            product = next((p for p in full if p[0] == self.selected_product_id), None)
-            if product:
-                self.hs_code_entry.insert(0, product[3] or "")
-                self.price_entry.insert(0, str(product[2]))
-                self.desc_entry.insert(0, product[4] or "")
-                self.unit_var.set(product[5] or "Ltr")
-                self.cat_var.set(product[6] or "Lubricant")
+            products = ProductController.get_all_products()
+            product = next((p for p in products if p[0] == self.selected_product_id), None)
         except Exception:
-            # Fallback
-            hs = vals[3] if vals[3] != "—" else ""
-            self.hs_code_entry.insert(0, hs)
-            price_str = vals[5].replace("Rs.", "").replace(",", "").strip()
-            self.price_entry.insert(0, price_str)
-            self.cat_var.set(vals[2] if vals[2] != "—" else "Lubricant")
-            self.unit_var.set(vals[4])
+            product = None
 
-        # Switch to edit mode
-        self.form_mode_label.config(text="  EDITING  ", bg="#FFF3E0", fg="#E65100")
-        self.add_btn.config(state="disabled")
-        self.update_btn.config(state="normal")
-        self.delete_btn.config(state="normal")
+        if product:
+            self.clear_form()
+            mapping = [
+                ("name", product[1]), ("price", product[2]),
+                ("hs_code", product[3]), ("desc", product[4]),
+                ("unit", product[5]), ("category", product[6]),
+                ("stock", product[10]), ("min", product[11]),
+            ]
+            for key, val in mapping:
+                if key in self.entries:
+                    self.entries[key].insert(0, str(val or ""))
 
-    # ─── CRUD Operations ──────────────────────────────────────────────
-
-    def _add_product(self):
-        name = self.name_entry.get().strip()
-        price_str = self.price_entry.get().strip()
-
+    def save_product(self):
+        name = self.entries["name"].get().strip()
         if not name:
-            return messagebox.showwarning("Validation", "Product name is required.")
-        if not price_str:
-            return messagebox.showwarning("Validation", "Unit price is required.")
-
+            return messagebox.showerror("Error", "Product name is required")
         try:
-            price = float(price_str)
-            if price < 0:
-                return messagebox.showwarning("Validation", "Price cannot be negative.")
+            d = {k: e.get().strip() for k, e in self.entries.items()}
+            
+            # Numeric conversions with fallbacks
+            def to_f(v): return float(v) if v else 0.0
+            def to_i(v): return int(v) if v else 0
 
-            ProductController.add_product(
-                name, price,
-                self.hs_code_entry.get(),
-                self.desc_entry.get(),
-                self.unit_var.get(),
-                self.cat_var.get()
-            )
-            self._clear_form()
-            self._refresh_all()
-            messagebox.showinfo("Success", f"'{name}' added to catalog.")
-        except ValueError as e:
+            args = [
+                d["name"], to_f(d["price"]), d["hs_code"], d["desc"],
+                d["unit"] or "Ltr", d["category"] or "Lubricant",
+                "", "", 0.0, # Brand, Viscosity, Purchase Price (Hidden)
+                to_f(d["stock"]), to_f(d.get("min", 10)), "" # Batch (Hidden)
+            ]
+
+            if self.selected_product_id:
+                ProductController.update_product(self.selected_product_id, *args)
+                messagebox.showinfo("Updated", f"'{name}' updated successfully.")
+            else:
+                ProductController.add_product(*args)
+                messagebox.showinfo("Added", f"'{name}' added successfully.")
+                
+            self.clear_form()
+            self.load_products()
+        except Exception as e:
             messagebox.showerror("Error", str(e))
 
-    def _update_product(self):
+    def delete_product(self):
         if not self.selected_product_id:
-            return
-
-        name = self.name_entry.get().strip()
-        price_str = self.price_entry.get().strip()
-
-        if not name:
-            return messagebox.showwarning("Validation", "Product name is required.")
-        if not price_str:
-            return messagebox.showwarning("Validation", "Unit price is required.")
-
-        try:
-            price = float(price_str)
-            if price < 0:
-                return messagebox.showwarning("Validation", "Price cannot be negative.")
-
-            ProductController.update_product(
-                self.selected_product_id, name, price,
-                self.hs_code_entry.get(),
-                self.desc_entry.get(),
-                self.unit_var.get(),
-                self.cat_var.get()
-            )
-            self._clear_form()
-            self._refresh_all()
-            messagebox.showinfo("Success", f"'{name}' updated successfully.")
-        except ValueError as e:
-            messagebox.showerror("Error", str(e))
-
-    def _delete_product(self):
-        if not self.selected_product_id:
-            return
-
-        name = self.name_entry.get().strip()
-        confirm = messagebox.askyesno(
-            "Confirm Deletion",
-            f"Are you sure you want to delete '{name}'?\n\nThis action cannot be undone.",
-            icon="warning"
-        )
-        if confirm:
+            return messagebox.showwarning("Select", "Please select a product first.")
+        if messagebox.askyesno("Confirm", "Delete this product?"):
             try:
                 ProductController.delete_product(self.selected_product_id)
-                self._clear_form()
-                self._refresh_all()
-                messagebox.showinfo("Deleted", f"'{name}' removed from catalog.")
+                self.clear_form()
+                self.load_products()
+                messagebox.showinfo("Deleted", "Product deleted.")
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-    def _clear_form(self, reset_mode=True):
-        """Clear all form fields. Only reset product ID and mode when reset_mode=True."""
-        self.name_entry.delete(0, tk.END)
-        self.hs_code_entry.delete(0, tk.END)
-        self.price_entry.delete(0, tk.END)
-        self.desc_entry.delete(0, tk.END)
-        self.unit_var.set("Ltr")
-        self.cat_var.set("Lubricant")
-
-        if reset_mode:
-            self.selected_product_id = None
-            self.form_mode_label.config(text="  NEW  ", bg="#E8F5E9", fg="#2E7D32")
-            self.add_btn.config(state="normal")
-            self.update_btn.config(state="disabled")
-            self.delete_btn.config(state="disabled")
-            # Deselect tree only on full reset
-            for sel in self.tree.selection():
-                self.tree.selection_remove(sel)
-
-    def _build_footer(self, parent):
-        footer = tk.Frame(parent, bg="white", height=30)
-        footer.pack(side="bottom", fill="x")
-        tk.Label(footer, text="Powered by Nexpioneer Technologies Pvt. Ltd.",
-                 font=("Segoe UI", 8), bg="white", fg="#9E9E9E").pack(pady=5)
+    def clear_form(self):
+        self.selected_product_id = None
+        for e in self.entries.values():
+            e.delete(0, tk.END)

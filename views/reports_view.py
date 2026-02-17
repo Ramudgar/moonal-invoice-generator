@@ -1,159 +1,162 @@
+"""
+ReportsView — Sales reports with light golden theme.
+Renders inside AppShell content area.
+"""
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from tkcalendar import DateEntry  # Try to use tkcalendar if available
-from datetime import datetime, timedelta
+from config.settings import Settings
 from controllers.report_controller import ReportController
 import csv
+import os
+
+try:
+    from tkcalendar import DateEntry
+    HAS_CALENDAR = True
+except ImportError:
+    HAS_CALENDAR = False
+
 
 class ReportsView(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-        self.COLORS = controller.COLORS
-        self.configure(bg=self.COLORS["bg"])
-        
-        # Date defaults (Current Month)
-        today = datetime.now()
-        self.start_date = (today.replace(day=1)).strftime("%Y-%m-%d")
-        self.end_date = today.strftime("%Y-%m-%d")
+        self.C = Settings.COLORS
+        self.F = Settings.FONTS
+        self.configure(bg=self.C["bg"])
+        self._build_ui()
 
-        self.style_setup()
-        self._build_header()
-        self._build_filters()
-        self._build_stats_summary()
-        self._build_table()
-        self.load_report()
+    def _build_ui(self):
+        # Filters bar
+        filters = tk.Frame(self, bg="white", padx=20, pady=14,
+                           highlightbackground=self.C["border"], highlightthickness=1)
+        filters.pack(fill="x", padx=24, pady=(16, 0))
 
-    def style_setup(self):
-        style = ttk.Style()
-        style.configure("Report.TButton", font=("Segoe UI", 10, "bold"), padding=8)
-        style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"), padding=5)
+        tk.Label(filters, text="Date Range:", font=self.F["body_bold"],
+                 bg="white", fg=self.C["text"]).pack(side="left")
 
-    def _build_header(self):
-        header = tk.Frame(self, bg=self.COLORS["primary"], padx=20, pady=15)
-        header.pack(fill="x")
-        
-        ttk.Button(header, text="← DASHBOARD", command=self.controller.show_dashboard).pack(side="left")
-        tk.Label(header, text="📊 REPORTS & ANALYTICS", font=("Segoe UI", 16, "bold"), 
-                 bg=self.COLORS["primary"], fg="white").pack(side="left", padx=20)
+        if HAS_CALENDAR:
+            self.start_date = DateEntry(filters, font=self.F["body"], width=12)
+            self.start_date.pack(side="left", padx=(8, 4))
+            tk.Label(filters, text="to", bg="white", fg=self.C["secondary"],
+                     font=self.F["body"]).pack(side="left")
+            self.end_date = DateEntry(filters, font=self.F["body"], width=12)
+            self.end_date.pack(side="left", padx=(4, 12))
+        else:
+            tk.Label(filters, text="From:", bg="white", fg=self.C["secondary"],
+                     font=self.F["small"]).pack(side="left", padx=(8, 2))
+            self.start_date = tk.Entry(filters, font=self.F["body"], width=12,
+                                        bg=self.C["input_bg"], relief="flat",
+                                        highlightthickness=2,
+                                        highlightbackground=self.C["input_border"],
+                                        highlightcolor=self.C["primary"])
+            self.start_date.pack(side="left", padx=(0, 4), ipady=3)
+            self.start_date.insert(0, "2024-01-01")
 
-    def _build_filters(self):
-        bar = tk.Frame(self, bg="white", padx=20, pady=15)
-        bar.pack(fill="x")
-        
-        # Date Range
-        tk.Label(bar, text="From:", bg="white", font=("Segoe UI", 10)).pack(side="left")
-        self.start_entry = tk.Entry(bar, width=12, font=("Segoe UI", 10))
-        self.start_entry.insert(0, self.start_date)
-        self.start_entry.pack(side="left", padx=5)
-        
-        tk.Label(bar, text="To:", bg="white", font=("Segoe UI", 10)).pack(side="left", padx=(10, 0))
-        self.end_entry = tk.Entry(bar, width=12, font=("Segoe UI", 10))
-        self.end_entry.insert(0, self.end_date)
-        self.end_entry.pack(side="left", padx=5)
-        
-        ttk.Button(bar, text="Apply Filter", command=self.load_report).pack(side="left", padx=15)
-        
-        # Exports
-        ttk.Button(bar, text="⬇ Export Excel", command=self.export_excel).pack(side="right")
+            tk.Label(filters, text="To:", bg="white", fg=self.C["secondary"],
+                     font=self.F["small"]).pack(side="left", padx=(4, 2))
+            self.end_date = tk.Entry(filters, font=self.F["body"], width=12,
+                                      bg=self.C["input_bg"], relief="flat",
+                                      highlightthickness=2,
+                                      highlightbackground=self.C["input_border"],
+                                      highlightcolor=self.C["primary"])
+            self.end_date.pack(side="left", padx=(0, 12), ipady=3)
+            self.end_date.insert(0, "2025-12-31")
 
-    def _build_stats_summary(self):
-        self.stats_frame = tk.Frame(self, bg="white", padx=20, pady=10)
-        self.stats_frame.pack(fill="x", pady=(1, 0))
-        
-        self.lbl_sales = self._make_card("NET SUBSALES", "Rs. 0.00")
-        self.lbl_vat = self._make_card("NET VAT", "Rs. 0.00")
-        self.lbl_total = self._make_card("GRAND TOTAL", "Rs. 0.00")
+        ttk.Button(filters, text="Generate Report", style="Gold.TButton",
+                    command=self.generate_report).pack(side="left", padx=4)
+        ttk.Button(filters, text="📥 Export CSV", style="Ghost.TButton",
+                    command=self.export_csv).pack(side="right")
 
-    def _make_card(self, title, val):
-        f = tk.Frame(self.stats_frame, bg="#F5F5F5", padx=20, pady=10, relief="flat")
-        f.pack(side="left", padx=10, fill="x", expand=True)
-        tk.Label(f, text=title, font=("Segoe UI", 8, "bold"), bg="#F5F5F5", fg=self.COLORS["secondary"]).pack(anchor="w")
-        l = tk.Label(f, text=val, font=("Segoe UI", 14, "bold"), bg="#F5F5F5", fg=self.COLORS["primary"])
-        l.pack(anchor="w")
-        return l
+        # Stats cards
+        self.stats_frame = tk.Frame(self, bg=self.C["bg"], padx=24, pady=12)
+        self.stats_frame.pack(fill="x")
 
-    def _build_table(self):
-        frame = tk.Frame(self, bg="white", padx=20, pady=10)
-        frame.pack(fill="both", expand=True)
-        
-        cols = ("Date", "Inv No", "Customer", "PAN", "Type", "Taxable", "VAT", "Total")
-        self.tree = ttk.Treeview(frame, columns=cols, show="headings", height=15)
-        
-        self.tree.heading("Date", text="DATE"); self.tree.column("Date", width=90)
-        self.tree.heading("Inv No", text="INVOICE NO"); self.tree.column("Inv No", width=120)
-        self.tree.heading("Customer", text="CUSTOMER"); self.tree.column("Customer", width=180)
-        self.tree.heading("PAN", text="PAN NO"); self.tree.column("PAN", width=100)
-        self.tree.heading("Type", text="TYPE"); self.tree.column("Type", width=80, anchor="center")
-        self.tree.heading("Taxable", text="TAXABLE"); self.tree.column("Taxable", width=100, anchor="e")
-        self.tree.heading("VAT", text="VAT"); self.tree.column("VAT", width=90, anchor="e")
-        self.tree.heading("Total", text="TOTAL"); self.tree.column("Total", width=110, anchor="e")
-        
-        sc = ttk.Scrollbar(frame, command=self.tree.yview)
-        self.tree.config(yscrollcommand=sc.set)
-        
-        self.tree.pack(side="left", fill="both", expand=True)
-        sc.pack(side="right", fill="y")
-        
-        self.tree.tag_configure("cn", background="#FFFDE7", foreground="#E65100")
+        # Table
+        table_frame = tk.Frame(self, bg="white",
+                               highlightbackground=self.C["border"], highlightthickness=1)
+        table_frame.pack(fill="both", expand=True, padx=24, pady=(0, 16))
 
-    def load_report(self):
-        s = self.start_entry.get()
-        e = self.end_entry.get()
-        
+        cols = ("Date", "Invoice #", "Customer", "PAN", "Taxable", "VAT", "Total", "Type")
+        self.tree = ttk.Treeview(table_frame, columns=cols, show="headings",
+                                  style="Custom.Treeview")
+        self.tree.pack(fill="both", expand=True, padx=8, pady=8)
+        for c in cols:
+            self.tree.heading(c, text=c)
+            self.tree.column(c, width=100 if len(c) < 5 else 125)
+
+    def generate_report(self):
         try:
-            # Validate dates
-            datetime.strptime(s, "%Y-%m-%d")
-            datetime.strptime(e, "%Y-%m-%d")
-        except ValueError:
-            messagebox.showerror("Error", "Invalid date format. Use YYYY-MM-DD")
+            if HAS_CALENDAR:
+                start = self.start_date.get_date().strftime("%Y-%m-%d")
+                end = self.end_date.get_date().strftime("%Y-%m-%d")
+            else:
+                start = self.start_date.get().strip()
+                end = self.end_date.get().strip()
+
+            data = ReportController.get_sales_register(start, end)
+
+            # Clear table
+            for i in self.tree.get_children():
+                self.tree.delete(i)
+
+            total_revenue = 0
+            total_vat = 0
+            total_taxable = 0
+
+            for row in data:
+                # row is a dict: {"Date", "Invoice No", "Customer", "PAN", "Taxable", "VAT", "Total", "Type"}
+                self.tree.insert("", "end", values=(
+                    row["Date"], row["Invoice No"], row["Customer"], row["PAN"],
+                    f"Rs. {row['Taxable']:,.2f}", f"Rs. {row['VAT']:,.2f}",
+                    f"Rs. {row['Total']:,.2f}", row["Type"]
+                ))
+                try:
+                    total_revenue += float(row["Total"])
+                    total_vat += float(row["VAT"])
+                    total_taxable += float(row["Taxable"])
+                except (ValueError, TypeError):
+                    pass
+
+            # Update stats
+            for w in self.stats_frame.winfo_children():
+                w.destroy()
+
+            stats = [
+                ("Total Revenue", f"Rs. {total_revenue:,.0f}", self.C["primary"]),
+                ("Taxable Amount", f"Rs. {total_taxable:,.0f}", self.C["info"]),
+                ("VAT Collected", f"Rs. {total_vat:,.0f}", self.C["success"]),
+                ("Record Count", str(len(data)), self.C["warning"]),
+            ]
+
+            for i, (lbl, val, color) in enumerate(stats):
+                card = tk.Frame(self.stats_frame, bg="white", padx=16, pady=12,
+                               highlightbackground=self.C["border"], highlightthickness=1)
+                card.pack(side="left", fill="x", expand=True,
+                          padx=(0 if i == 0 else 6, 0))
+                tk.Frame(card, bg=color, height=3).pack(fill="x", pady=(0, 8))
+                tk.Label(card, text=val, font=("Segoe UI", 16, "bold"),
+                         bg="white", fg=self.C["text"]).pack(anchor="w")
+                tk.Label(card, text=lbl, font=self.F["small"],
+                         bg="white", fg=self.C["secondary"]).pack(anchor="w")
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def export_csv(self):
+        items = self.tree.get_children()
+        if not items:
+            return messagebox.showinfo("No Data", "Generate a report first.")
+        path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                             filetypes=[("CSV", "*.csv")])
+        if not path:
             return
-
-        for i in self.tree.get_children(): self.tree.delete(i)
-        
-        data = ReportController.get_sales_register(s, e)
-        
-        t_sub = 0; t_vat = 0; t_tot = 0
-        
-        for row in data:
-            # row is dict
-            total = float(row.get("Total", 0))
-            sub = float(row.get("Taxable", 0))
-            vat = float(row.get("VAT", 0))
-            
-            # Since Credit Notes are stored as negative in DB items, their totals should be negative.
-            # However, ensure get_sales_register logic handles it. 
-            # In InvoiceController.create_credit_note, we use negative quantities.
-            # So sums stored in Invoices table should be negative.
-            
-            t_sub += sub; t_vat += vat; t_tot += total
-            
-            tag = "cn" if row["Type"] == "Credit Note" else ""
-            self.tree.insert("", "end", values=(
-                row["Date"], row["Invoice No"], row["Customer"], row["PAN"], row["Type"],
-                f"{sub:,.2f}", f"{vat:,.2f}", f"{total:,.2f}"
-            ), tags=(tag,))
-            
-        self.lbl_sales.config(text=f"Rs. {t_sub:,.2f}")
-        self.lbl_vat.config(text=f"Rs. {t_vat:,.2f}")
-        self.lbl_total.config(text=f"Rs. {t_tot:,.2f}")
-        
-        self.current_data = data
-
-    def export_excel(self):
-        if not hasattr(self, 'current_data') or not self.current_data:
-            return messagebox.showwarning("No Data", "Generate a report first.")
-            
-        fn = filedialog.asksaveasfilename(defaultextension=".csv", 
-                                          filetypes=[("CSV File", "*.csv"), ("Excel File", "*.xlsx")])
-        if not fn: return
-        
-        # Use CSV for robust fallback without dependencies
         try:
-            with open(fn, 'w', newline='', encoding='utf-8') as f:
-                w = csv.DictWriter(f, fieldnames=self.current_data[0].keys())
-                w.writeheader()
-                w.writerows(self.current_data)
-            messagebox.showinfo("Export Successful", f"Report saved to {fn}")
+            with open(path, "w", newline="") as f:
+                writer = csv.writer(f)
+                cols = [self.tree.heading(c)["text"] for c in self.tree["columns"]]
+                writer.writerow(cols)
+                for item in items:
+                    writer.writerow(self.tree.item(item)["values"])
+            messagebox.showinfo("Exported", f"Report saved to {path}")
         except Exception as e:
             messagebox.showerror("Error", str(e))

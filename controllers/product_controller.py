@@ -7,7 +7,8 @@ class ProductController:
     CATEGORIES = ['Lubricant', 'Engine Oil', 'Gear Oil', 'Hydraulic Oil', 'Grease', 'Coolant', 'Brake Fluid', 'Transmission Fluid', 'Other']
 
     @staticmethod
-    def add_product(name, price, hs_code, description='', unit='Ltr', category='Lubricant'):
+    def add_product(name, price, hs_code, description='', unit='Ltr', category='Lubricant',
+                   brand='', viscosity='', purchase_price=0, stock_quantity=0, min_stock_alert=10, batch_number=''):
         """Add a new product to the database with full validation."""
         name = name.strip()
         if not name:
@@ -15,7 +16,9 @@ class ProductController:
         price = float(price)
         if price < 0:
             raise ValueError("Price must be non-negative.")
-        Product.add_product(name, price, hs_code.strip(), description.strip(), unit, category)
+            
+        Product.add_product(name, price, hs_code.strip(), description.strip(), unit, category,
+                           brand, viscosity, purchase_price, stock_quantity, min_stock_alert, batch_number)
 
     @staticmethod
     def get_all_products():
@@ -28,7 +31,8 @@ class ProductController:
         return Product.search_products(keyword.strip())
 
     @staticmethod
-    def update_product(product_id, name, price, hs_code, description='', unit='Ltr', category='Lubricant'):
+    def update_product(product_id, name, price, hs_code, description='', unit='Ltr', category='Lubricant',
+                       brand='', viscosity='', purchase_price=0, stock_quantity=0, min_stock_alert=10, batch_number=''):
         """Update an existing product with full validation."""
         name = name.strip()
         if not product_id:
@@ -38,7 +42,9 @@ class ProductController:
         price = float(price)
         if price < 0:
             raise ValueError("Price must be non-negative.")
-        Product.update_product(product_id, name, price, hs_code.strip(), description.strip(), unit, category)
+            
+        Product.update_product(product_id, name, price, hs_code.strip(), description.strip(), unit, category,
+                              brand, viscosity, purchase_price, stock_quantity, min_stock_alert, batch_number)
 
     @staticmethod
     def delete_product(product_id):
@@ -55,3 +61,11 @@ class ProductController:
             Product.get_category_count(),
             Product.get_average_price()
         )
+
+    @staticmethod
+    def adjust_stock(product_id, quantity_change):
+        Product.adjust_stock(product_id, quantity_change)
+
+    @staticmethod
+    def get_low_stock_products():
+        return Product.get_low_stock_products()

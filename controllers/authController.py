@@ -1,5 +1,6 @@
 import hashlib
 import sqlite3
+import bcrypt
 from config.database import connect_db
 from controllers.audit_controller import AuditLogger
 
@@ -9,8 +10,8 @@ class AuthController:
 
     @staticmethod
     def _hash_password(password):
-        """Hash password using SHA-256."""
-        return hashlib.sha256(password.encode()).hexdigest()
+        """Hash password using bcrypt."""
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     @staticmethod
     def initialize_users():
@@ -47,7 +48,34 @@ class AuthController:
 
         if row:
             stored_hash, role = row
-            if AuthController._hash_password(password) == stored_hash:
+            valid = False
+            
+            # 1. Try Bcrypt
+            if stored_hash.startswith('$2b$'):
+                try:
+                    if bcrypt.checkpw(password.encode(), stored_hash.encode()):
+                        valid = True
+                except ValueError:
+                    pass # Invalid salt/hash format
+
+            # 2. Try Legacy SHA-256 (64 hex chars)
+            if not valid and len(stored_hash) == 64:
+                sha_hash = hashlib.sha256(password.encode()).hexdigest()
+                if sha_hash == stored_hash:
+                    valid = True
+                    # AUTO-MIGRATE to Bcrypt
+                    try:
+                        new_hash = AuthController._hash_password(password)
+                        conn = connect_db()
+                        conn.execute("UPDATE users SET password_hash = ? WHERE username = ?", (new_hash, username))
+                        conn.commit()
+                        conn.close()
+                        AuditLogger.log_action("SECURITY_UPGRADE", username, "Migrated to bcrypt")
+                        print(f"Migrated user '{username}' to bcrypt.")
+                    except Exception as e:
+                        print(f"Migration failed: {e}")
+
+            if valid:
                 AuthController.CURRENT_USER = username
                 AuthController.CURRENT_ROLE = role
                 AuditLogger.log_action("LOGIN", username, "Success")
