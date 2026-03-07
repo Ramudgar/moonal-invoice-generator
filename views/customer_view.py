@@ -50,10 +50,14 @@ class CustomerView(tk.Frame):
 
         btn_frame = tk.Frame(left, bg="white")
         btn_frame.pack(fill="x", pady=(16, 0))
-        ttk.Button(btn_frame, text="💾  Save", style="Gold.TButton",
-                    command=self.save_customer).pack(side="left", fill="x", expand=True, padx=(0, 4))
-        ttk.Button(btn_frame, text="🗑  Delete", style="Danger.TButton",
-                    command=self.delete_customer).pack(side="left", fill="x", expand=True, padx=(4, 0))
+        self.save_btn = ttk.Button(btn_frame, text="💾  Add Customer", style="Gold.TButton",
+                    command=self.save_customer)
+        self.save_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self.update_btn = ttk.Button(btn_frame, text="✏️  Update", style="Pink.TButton",
+                    command=self.save_customer)
+        self.delete_btn = ttk.Button(btn_frame, text="🗑  Delete", style="Danger.TButton",
+                    command=self.delete_customer)
+        self.delete_btn.pack(side="left", fill="x", expand=True, padx=(4, 0))
         ttk.Button(left, text="Clear Form", style="Ghost.TButton",
                     command=self.clear_form).pack(fill="x", pady=(8, 0))
 
@@ -106,14 +110,16 @@ class CustomerView(tk.Frame):
         if not sel:
             return
         values = self.tree.item(sel[0])["values"]
-        self.selected_customer_id = values[0]
+        cid = int(values[0])
         try:
             customers = CustomerController.get_all_customers()
-            cust = next((c for c in customers if c[0] == self.selected_customer_id), None)
+            cust = next((c for c in customers if c[0] == cid), None)
         except Exception:
             cust = None
         if cust:
             self.clear_form()
+            # Re-set ID AFTER clear_form (which resets it to None)
+            self.selected_customer_id = cid
             mapping = [
                 ("name", cust[1]), ("pan", cust[2]),
                 ("address", cust[3]), ("contact", cust[4]),
@@ -121,6 +127,16 @@ class CustomerView(tk.Frame):
             ]
             for key, val in mapping:
                 self.entries[key].insert(0, str(val or ""))
+            self._update_buttons(editing=True)
+
+    def _update_buttons(self, editing=False):
+        """Show/hide Update button and change Save button text based on mode."""
+        if editing:
+            self.save_btn.config(text="💾  Add New")
+            self.update_btn.pack(side="left", fill="x", expand=True, padx=(0, 4), before=self.delete_btn)
+        else:
+            self.save_btn.config(text="💾  Add Customer")
+            self.update_btn.pack_forget()
 
     def save_customer(self):
         name = self.entries["name"].get().strip()
@@ -160,3 +176,4 @@ class CustomerView(tk.Frame):
         self.selected_customer_id = None
         for e in self.entries.values():
             e.delete(0, tk.END)
+        self._update_buttons(editing=False)

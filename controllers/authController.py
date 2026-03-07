@@ -156,3 +156,72 @@ class AuthController:
         conn.close()
         AuditLogger.log_action("USER_DELETE", AuthController.CURRENT_USER, f"Deleted {username}")
         return True, "User deleted"
+
+    @staticmethod
+    def change_password(username, current_password, new_password):
+        """Change password after verifying the current one."""
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT password_hash FROM users WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            raise ValueError("User not found.")
+
+        stored_hash = row[0]
+        valid = False
+
+        # Verify current password (bcrypt)
+        if stored_hash.startswith('$2b$'):
+            try:
+                if bcrypt.checkpw(current_password.encode(), stored_hash.encode()):
+                    valid = True
+            except ValueError:
+                pass
+
+        # Verify current password (legacy SHA-256)
+        if not valid and len(stored_hash) == 64:
+            sha_hash = hashlib.sha256(current_password.encode()).hexdigest()
+            if sha_hash == stored_hash:
+                valid = True
+
+        if not valid:
+            raise ValueError("Current password is incorrect.")
+
+        # Update to new password
+        new_hash = AuthController._hash_password(new_password)
+        conn = connect_db()
+        conn.execute("UPDATE users SET password_hash = ? WHERE username = ?", (new_hash, username))
+        conn.commit()
+        conn.close()
+        AuditLogger.log_action("PASSWORD_CHANGE", username, "Password changed by user")
+
+    @staticmethod
+    def forgot_password(username, pin1, pin2, new_password):
+        """Reset password using security PINs."""
+        # Validate PINs (hardcoded security PINs)
+        if str(pin1) != "543210" or str(pin2) != "852036":
+            raise ValueError("Invalid security PINs.")
+
+        # Check user exists
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            raise ValueError("User not found.")
+
+        # Reset password
+        new_hash = AuthController._hash_password(new_password)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE username = ?", (new_hash, username))
+        conn.commit()
+        conn.close()
+        AuditLogger.log_action("PASSWORD_RESET", username, "Password reset via security PINs")
+
+    @staticmethod
+    def get_audit_logs(limit=100):
+        """Delegate to AuditLogger."""
+        return AuditLogger.get_logs(limit)
+

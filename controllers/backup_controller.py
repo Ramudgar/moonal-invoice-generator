@@ -59,6 +59,34 @@ class BackupController:
         return [os.path.basename(f) for f in files]
 
     @staticmethod
+    def list_backups():
+        """Return backup info as tuples (filename, date, size) for the admin UI."""
+        BackupController.ensure_backup_dir()
+        pattern = os.path.join(BackupController.BACKUP_DIR, "backup_*.sqlite")
+        files = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+        result = []
+        for f in files:
+            filename = os.path.basename(f)
+            # Parse date from filename: backup_YYYYMMDD_HHMMSS.sqlite
+            try:
+                parts = filename.replace("backup_", "").replace(".sqlite", "")
+                dt = datetime.strptime(parts, "%Y%m%d_%H%M%S")
+                date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            except Exception:
+                date_str = "Unknown"
+            # File size
+            try:
+                size_bytes = os.path.getsize(f)
+                if size_bytes > 1024 * 1024:
+                    size_str = f"{size_bytes / (1024*1024):.1f} MB"
+                else:
+                    size_str = f"{size_bytes / 1024:.0f} KB"
+            except Exception:
+                size_str = "?"
+            result.append((filename, date_str, size_str))
+        return result
+
+    @staticmethod
     def restore_backup(filename, user):
         """
         Restore the database from a backup file.

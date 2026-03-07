@@ -226,7 +226,7 @@ class InvoiceView(tk.Frame):
         selected = next((p for p in self.product_list
                          if f"{p[1]} (Rs. {p[2]}/{p[5]})" == val), None)
         if selected:
-            pid, name, price, hs = selected[0], selected[1], selected[2], selected[3]
+            pid, name, price, hs, unit = selected[0], selected[1], selected[2], selected[3], selected[5]
             existing = next((item for item in self.invoice_items
                              if item["product_id"] == pid), None)
             if existing:
@@ -236,6 +236,7 @@ class InvoiceView(tk.Frame):
                 self.invoice_items.append({
                     "product_id": pid, "product_name": name,
                     "price_per_unit": float(price), "hs_code": hs,
+                    "unit": unit,
                     "quantity": qty, "total_price": float(price) * qty
                 })
             self.update_items_table()
@@ -263,23 +264,31 @@ class InvoiceView(tk.Frame):
         tk.Label(payment, text="FINALIZING", font=self.F["h3"],
                  bg="white", fg=self.C["primary"]).pack(anchor="w", pady=(0, 10))
 
-        def create_field(label, attr, default="0"):
+        # Use StringVars for live recalculation
+        self.vat_var = tk.StringVar(value=str(getattr(self, 'vat_rate', '13') or '13'))
+        self.disc_var = tk.StringVar(value=str(getattr(self, 'discount', '0') or '0'))
+        self.paid_var = tk.StringVar(value=str(getattr(self, 'paid_amt', '0') or '0'))
+
+        def create_field(label, var):
             tk.Label(payment, text=label, font=self.F["small_bold"],
                      bg="white", fg=self.C["secondary"]).pack(anchor="w")
             e = tk.Entry(payment, font=("Segoe UI", 12, "bold"),
                          bg=self.C["input_bg"], relief="flat",
+                         textvariable=var,
                          highlightthickness=2,
                          highlightbackground=self.C["primary"],
                          highlightcolor=self.C["primary"])
-            if not hasattr(self, attr) or getattr(self, attr) is None:
-                setattr(self, attr, default)
-            e.insert(0, str(getattr(self, attr)))
             e.pack(fill="x", pady=(5, 10), ipady=5)
             return e
 
-        self.vat_entry = create_field("TAX RATE (%)", "vat_rate", "13")
-        self.disc_entry = create_field("DISCOUNT (%)", "discount", "0")
-        self.paid_entry = create_field("AMOUNT PAID (Rs.)", "paid_amt", "0")
+        self.vat_entry = create_field("TAX RATE (%)", self.vat_var)
+        self.disc_entry = create_field("DISCOUNT (%)", self.disc_var)
+        self.paid_entry = create_field("AMOUNT PAID (Rs.)", self.paid_var)
+
+        # Live recalculation when any field changes
+        self.vat_var.trace_add("write", lambda *a: self._refresh_summary())
+        self.disc_var.trace_add("write", lambda *a: self._refresh_summary())
+        self.paid_var.trace_add("write", lambda *a: self._refresh_summary())
 
         ttk.Button(payment, text="FINALIZE & SAVE ✅", style="Gold.TButton",
                     command=self.finalize_invoice).pack(fill="x", pady=10)
@@ -359,7 +368,7 @@ class InvoiceView(tk.Frame):
         table = ttk.Treeview(parent, columns=("D", "Q", "P", "T"),
                               show="headings", height=8, style="Custom.Treeview")
         table.pack(fill="both", expand=True, padx=30, pady=(15, 5))
-        table.heading("D", text="DESCRIPTION")
+        table.heading("D", text="PARTICULARS")
         table.heading("Q", text="QTY")
         table.heading("P", text="UNIT PRICE")
         table.heading("T", text="AMOUNT")
@@ -375,11 +384,39 @@ class InvoiceView(tk.Frame):
                 f"Rs. {float(i['total_price']):,.2f}"
             ))
 
-        # ── Tax Breakdown ──
+        # ── Tax Breakdown (dynamic summary frame) ──
+        self.summary_frame = tk.Frame(parent, bg="white", padx=30)
+        self.summary_frame.pack(fill="x", pady=(5, 15))
+        self._refresh_summary()
+
+    def _refresh_summary(self):
+        """Recalculate and redraw the tax breakdown summary."""
+        if not hasattr(self, 'summary_frame') or not self.summary_frame.winfo_exists():
+            return
+
+        # Clear existing summary content
+        for w in self.summary_frame.winfo_children():
+            w.destroy()
+
         subtotal = sum(float(i['total_price']) for i in self.invoice_items)
-        vat_rate = float(getattr(self, 'vat_rate', 13) or 13)
-        discount_pct = float(getattr(self, 'discount', 0) or 0)
-        paid_amt = float(getattr(self, 'paid_amt', 0) or 0)
+
+        # Read from StringVars if available (step 3 edit), else from stored attrs
+        try:
+            vat_rate = float(self.vat_var.get() or 13) if hasattr(self, 'vat_var') else float(getattr(self, 'vat_rate', 13) or 13)
+        except (ValueError, tk.TclError):
+            vat_rate = float(getattr(self, 'vat_rate', 13) or 13)
+        try:
+            discount_pct = float(self.disc_var.get() or 0) if hasattr(self, 'disc_var') else float(getattr(self, 'discount', 0) or 0)
+        except (ValueError, tk.TclError):
+            discount_pct = float(getattr(self, 'discount', 0) or 0)
+        try:
+            paid_amt = float(self.paid_var.get() or 0) if hasattr(self, 'paid_var') else float(getattr(self, 'paid_amt', 0) or 0)
+        except (ValueError, tk.TclError):
+            paid_amt = float(getattr(self, 'paid_amt', 0) or 0)
+
+        # Clamp discount
+        if discount_pct < 0: discount_pct = 0
+        if discount_pct > 100: discount_pct = 100
 
         discount_amt = subtotal * (discount_pct / 100)
         taxable_amount = subtotal - discount_amt
@@ -387,16 +424,14 @@ class InvoiceView(tk.Frame):
         grand_total = taxable_amount + vat_amount
         due_amount = grand_total - paid_amt
 
-        # STORE on self so finalize_invoice() can access them
+        # Store on self so finalize_invoice() can access them
         self.subtotal = subtotal
         self.tax_amount = vat_amount
         self.grand_total = grand_total
         self.paid_amount = paid_amt
         self.due_amount = due_amount
 
-        summary = tk.Frame(parent, bg="white", padx=30)
-        summary.pack(fill="x", pady=(5, 15))
-        summary_right = tk.Frame(summary, bg="white")
+        summary_right = tk.Frame(self.summary_frame, bg="white")
         summary_right.pack(side="right")
 
         def add_line(label, value, bold=False, color=None):
@@ -480,6 +515,11 @@ class InvoiceView(tk.Frame):
             discount_pct = float(self.disc_entry.get() or 0)
             paid_amt = float(self.paid_entry.get() or 0)
 
+            # Store on self for print_invoice to use
+            self.vat_rate = vat_rate
+            self.discount = discount_pct
+            self.paid_amt = paid_amt
+
             # Compute financial totals
             subtotal = sum(float(i['total_price']) for i in self.invoice_items)
             discount_amt = subtotal * (discount_pct / 100)
@@ -553,9 +593,11 @@ class InvoiceView(tk.Frame):
                 "cancel_reason": getattr(self, 'cancel_reason', ''),
                 "cancelled_date": getattr(self, 'cancelled_date', ''),
                 "is_credit_note": getattr(self, 'is_credit_note', False),
-                "company_name": self.settings.get("company_name", "MOONAL UDHYOG PVT. LTD."),
-                "company_address": self.settings.get("company_address", "Golbazar-4, Siraha, Nepal"),
-                "company_pan": self.settings.get("company_pan", "123456789"),
+                "company_name": self.settings.get("company_name", Settings.COMPANY_NAME),
+                "company_address": self.settings.get("company_address", Settings.COMPANY_ADDRESS),
+                "company_pan": self.settings.get("company_pan", Settings.COMPANY_PAN),
+                "company_contact": getattr(Settings, 'COMPANY_CONTACT', '9704508000'),
+                "company_email": getattr(Settings, 'COMPANY_EMAIL', 'moonalpvtltd@gmail.com'),
             }
 
             self.configure(cursor="watch")

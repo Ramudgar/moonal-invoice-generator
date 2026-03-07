@@ -125,12 +125,16 @@ class AdminView(tk.Frame):
             if not u or not p:
                 return messagebox.showerror("Error", "All fields required.")
             try:
-                AuthController.register_user(u, p, r)
-                dialog.destroy()
-                self._load_users()
-                messagebox.showinfo("Success", f"User '{u}' created.")
+                success, msg = AuthController.create_user(u, p, r)
+                if success:
+                    dialog.destroy()
+                    self._load_users()
+                    messagebox.showinfo("Success", f"User '{u}' created.")
+                else:
+                    messagebox.showerror("Error", msg)
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+
 
         ttk.Button(dialog, text="Create User", style="Gold.TButton",
                     command=do_add).pack(fill="x", padx=30, pady=(8, 0))
@@ -151,12 +155,13 @@ class AdminView(tk.Frame):
         ttk.Button(btn_frame, text="Restore from Backup", style="Danger.TButton",
                     command=self._restore_backup).pack(side="left")
 
-        cols = ("Date", "Trigger", "User", "Size")
+        cols = ("Filename", "Date", "Size")
         self.backup_tree = ttk.Treeview(card, columns=cols, show="headings",
                                          style="Custom.Treeview")
         self.backup_tree.pack(fill="both", expand=True)
         for c in cols:
             self.backup_tree.heading(c, text=c)
+            self.backup_tree.column(c, width=200 if c == "Filename" else 150)
 
         self._load_backups()
 
@@ -175,8 +180,13 @@ class AdminView(tk.Frame):
         if messagebox.askyesno("Confirm", "Restore this backup? Current data will be replaced."):
             try:
                 values = self.backup_tree.item(sel[0])["values"]
-                BackupController.restore_backup(values[0])
-                messagebox.showinfo("Restored", "Backup restored. Restart the app.")
+                filename = values[0]  # First column is the filename
+                user = AuthController.CURRENT_USER or "admin"
+                success, msg = BackupController.restore_backup(filename, user)
+                if success:
+                    messagebox.showinfo("Restored", msg)
+                else:
+                    messagebox.showerror("Error", msg)
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 

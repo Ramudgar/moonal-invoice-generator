@@ -39,7 +39,11 @@ class Product:
         """Retrieve a single product by its ID."""
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT product_id, name, price, hs_code, description, unit, category FROM Products WHERE product_id = ?", (product_id,))
+        cursor.execute("""
+            SELECT product_id, name, price, hs_code, description, unit, category,
+                   brand, viscosity, purchase_price, stock_quantity, min_stock_alert, batch_number
+            FROM Products WHERE product_id = ?
+        """, (product_id,))
         product = cursor.fetchone()
         conn.close()
         return product
@@ -51,7 +55,8 @@ class Product:
         cursor = conn.cursor()
         like = f"%{keyword}%"
         cursor.execute('''
-            SELECT product_id, name, price, hs_code, description, unit, category
+            SELECT product_id, name, price, hs_code, description, unit, category,
+                   brand, viscosity, purchase_price, stock_quantity, min_stock_alert, batch_number
             FROM Products
             WHERE name LIKE ? OR hs_code LIKE ? OR category LIKE ?
             ORDER BY name

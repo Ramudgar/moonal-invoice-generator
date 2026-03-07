@@ -101,13 +101,17 @@ class ProductView(tk.Frame):
 
         btn_frame = tk.Frame(left, bg="white")
         btn_frame.pack(fill="x", pady=(20, 0))
-        ttk.Button(btn_frame, text="💾  Save Product", style="Gold.TButton",
-                    command=self.save_product).pack(fill="x", ipady=5)
+        self.save_btn = ttk.Button(btn_frame, text="💾  Add Product", style="Gold.TButton",
+                    command=self.save_product)
+        self.save_btn.pack(fill="x", ipady=5)
         
         lower_btns = tk.Frame(left, bg="white")
         lower_btns.pack(fill="x", pady=(8, 0))
-        ttk.Button(lower_btns, text="🗑  Delete", style="Danger.TButton",
-                    command=self.delete_product).pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self.update_btn = ttk.Button(lower_btns, text="✏️  Update", style="Pink.TButton",
+                    command=self.save_product)
+        self.delete_btn = ttk.Button(lower_btns, text="🗑  Delete", style="Danger.TButton",
+                    command=self.delete_product)
+        self.delete_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
         ttk.Button(lower_btns, text="Clear", style="Ghost.TButton",
                     command=self.clear_form).pack(side="left", fill="x", expand=True, padx=(4, 0))
 
@@ -166,15 +170,17 @@ class ProductView(tk.Frame):
         if not sel:
             return
         values = self.tree.item(sel[0])["values"]
-        self.selected_product_id = values[0]
+        pid = int(values[0])  # Cast to int to match DB type
         try:
             products = ProductController.get_all_products()
-            product = next((p for p in products if p[0] == self.selected_product_id), None)
+            product = next((p for p in products if p[0] == pid), None)
         except Exception:
             product = None
 
         if product:
             self.clear_form()
+            # Re-set ID AFTER clear_form (which resets it to None)
+            self.selected_product_id = pid
             mapping = [
                 ("name", product[1]), ("price", product[2]),
                 ("hs_code", product[3]), ("desc", product[4]),
@@ -182,8 +188,23 @@ class ProductView(tk.Frame):
                 ("stock", product[10]), ("min", product[11]),
             ]
             for key, val in mapping:
-                if key in self.entries:
-                    self.entries[key].insert(0, str(val or ""))
+                widget = self.entries.get(key)
+                if widget is None:
+                    continue
+                if isinstance(widget, ttk.Combobox):
+                    widget.set(str(val or ""))
+                else:
+                    widget.insert(0, str(val or ""))
+            self._update_buttons(editing=True)
+
+    def _update_buttons(self, editing=False):
+        """Show/hide Update button and change Save button text based on mode."""
+        if editing:
+            self.save_btn.config(text="💾  Add New")
+            self.update_btn.pack(side="left", fill="x", expand=True, padx=(0, 4), before=self.delete_btn)
+        else:
+            self.save_btn.config(text="💾  Add Product")
+            self.update_btn.pack_forget()
 
     def save_product(self):
         name = self.entries["name"].get().strip()
@@ -230,4 +251,9 @@ class ProductView(tk.Frame):
     def clear_form(self):
         self.selected_product_id = None
         for e in self.entries.values():
-            e.delete(0, tk.END)
+            if isinstance(e, ttk.Combobox):
+                e.set("")
+            else:
+                e.delete(0, tk.END)
+        self._update_buttons(editing=False)
+

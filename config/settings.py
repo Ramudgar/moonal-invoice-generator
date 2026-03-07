@@ -2,7 +2,9 @@ class Settings:
     APP_NAME = "Moonal Udhyog PVT. LTD. - IMS"
     COMPANY_NAME = "Moonal Udhyog PVT. LTD."
     COMPANY_ADDRESS = "Golbazar-4, Siraha, Nepal"
-    COMPANY_PAN = "610338108"
+    COMPANY_PAN = "609764022"
+    COMPANY_CONTACT = "9704508000"
+    COMPANY_EMAIL = "moonalpvtltd@gmail.com"
     APP_DIR_NAME = "MoonalInvoiceApp"
 
     # ── Warm Light-Mode Golden Palette ──────────────────────────────
